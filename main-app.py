@@ -17,10 +17,7 @@ import numpy as np
 import tempfile, os
 import streamlit as st
 
-OPENAI_API_KEY = "sk-proj-FB3ehOwuFIOhOx3Ja71LT3BlbkFJgvAMQky5akL66vHcmk80"
-GROQ_API_KEY = "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"
-LANGCHAIN_API_KEY = "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"
-LANGCHAIN_TRACING_V2 = "true"
+LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
 db_uri = f"sqlite:///supplier-database.db"
 db = SQLDatabase.from_uri(db_uri)
@@ -77,7 +74,7 @@ def get_sql_chain(db):
     prompt = ChatPromptTemplate.from_template(template)
     
     print("LLM")
-    llm = ChatGroq(model="llama3-70b-8192", temperature=0)
+    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
     
     print("Chain")
     return (
@@ -110,7 +107,7 @@ def get_response(user_query: str, db: SQLDatabase, chat_history: list):
     prompt = ChatPromptTemplate.from_template(template)
     
     print("LLM: ")
-    llm = ChatGroq(model="llama3-70b-8192", temperature=0)
+    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
     
     print("Chain: ")
     chain = (
@@ -149,11 +146,7 @@ def get_pdf_nlp_query(pdf_file: list):
     pdf_fx = save_uploaded_file(pdf_file)
     loader = PyPDFLoader(pdf_fx)
     pdf_f = loader.load_and_split()
-    faiss_index = FAISS.from_documents(pdf_f, OpenAIEmbeddings(model="text-embedding-3-small", dimensions=1536))
-    # reader = PdfReader(pdf_fx)
-    # text = ""
-    # for page in reader.pages:
-    #     text += page.extract_text()
+    faiss_index = FAISS.from_documents(pdf_f, OpenAIEmbeddings(model="text-embedding-3-small", dimensions=1536, api_key=st.secrets["OPENAI_API_KEY"]))
 
     question = "From the RFP document, extract the services sought and their respective NAICS codes. Then, generate a SQL query to retrieve a list of contractors offering these services. Limit the search results to 10."
 
@@ -179,7 +172,7 @@ def get_pdf_nlp_query(pdf_file: list):
     
     prompt = ChatPromptTemplate.from_template(template)
     
-    llm = ChatGroq(model="llama3-8b-8192", temperature=0)
+    llm = ChatGroq(model="llama3-8b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
     
     # faiss_index.as_retriever() | format_docs
     chain = (
