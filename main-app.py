@@ -17,6 +17,10 @@ import numpy as np
 import tempfile, os
 import streamlit as st
 
+OPENAI_API_KEY = "sk-proj-FB3ehOwuFIOhOx3Ja71LT3BlbkFJgvAMQky5akL66vHcmk80"
+GROQ_API_KEY = "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"
+LANGCHAIN_API_KEY = "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"
+LANGCHAIN_TRACING_V2 = "true"
 
 db_uri = f"sqlite:///supplier-database.db"
 db = SQLDatabase.from_uri(db_uri)
