@@ -153,7 +153,7 @@ def get_pdf_nlp_query(pdf_file: list):
     template = """
     You are an Service Identifier AI at a match-making company. You are working with a RFP pdf that a User has uploaded and you are tasked 
     to contextually extract the sought services mentioned in the Request for Proposal (RFP) / Request for Information (RFI) document context provided under statement of procurement purpose.
-    Following the extraction of the detailed services and NAICS codes extracted from the RFP, create a Natural Language query to find companies offering these services.
+    Following the extraction of the specified services and NAICS codes [Atmost 2 to 3 Codes] extracted from the RFP, create a Natural Language query to find companies offering these services.
 
     <SCHEMA> {schema} </SCHEMA>
 
@@ -164,7 +164,7 @@ def get_pdf_nlp_query(pdf_file: list):
     Question: {question}
 
     Example:
-    Natural Language Query: Find companies offering web development and graphic design services or with possible NAICS codes: 541511 or 541430.
+    Natural Language Query: Find companies offering web development and graphic design services or with possible NAICS codes: [541511] or [541430].
 
     Your turn:
     Natural Language Query:
@@ -207,12 +207,13 @@ for message in st.session_state.chat_history:
         with st.chat_message("Human"):
             st.markdown(message.content)
 
+with st.sidebar:
+    pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
 
 with bottom():
     row2 = row.row([8, 2], vertical_align="center")
     user_query = row2.chat_input("Type a message...")
     sb = row2.button("Clear History", use_container_width=True)
-    pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
 
 if sb:
     st.session_state.chat_history = []
