@@ -1,8 +1,4 @@
-OPENAI_API_KEY = "sk-proj-FB3ehOwuFIOhOx3Ja71LT3BlbkFJgvAMQky5akL66vHcmk80"
-GROQ_API_KEY = "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"
-LANGCHAIN_API_KEY = "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"
-LANGCHAIN_TRACING_V2 = "true"
-
+from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
