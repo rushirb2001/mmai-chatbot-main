@@ -29,8 +29,7 @@ def download_db():
     st.session_state.db = db
 download_db()
 
-
-# LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
+LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
 def get_schema(_):
     return db.get_table_info()
