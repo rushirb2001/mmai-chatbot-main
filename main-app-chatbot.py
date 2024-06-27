@@ -26,8 +26,9 @@ def download_db():
     gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
     db_uri = f"sqlite:///supplier-database.db"
     db = SQLDatabase.from_uri(db_uri)
-    st.session_state.db = db
-download_db()
+    return db
+db = download_db()
+st.session_state.db = db
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
