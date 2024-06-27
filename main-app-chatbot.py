@@ -15,21 +15,17 @@ from streamlit_extras.bottom_container import bottom
 import pandas as pd
 import numpy as np
 import gdown
+import zipfile
 import tempfile, os
 import streamlit as st
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
-@st.cache_data
-def init_database():
+if not st.session_state.db:
+    gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
     db_uri = f"sqlite:///supplier-database.db"
     db = SQLDatabase.from_uri(db_uri)
-    return db
-
-if "db" not in st.session_state:
-    db = init_database()
     st.session_state.db = db
-
 
 def get_schema(_):
     return db.get_table_info()
