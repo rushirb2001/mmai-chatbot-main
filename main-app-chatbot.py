@@ -14,14 +14,22 @@ from streamlit_extras import grid, row
 from streamlit_extras.bottom_container import bottom
 import pandas as pd
 import numpy as np
+import gdown
 import tempfile, os
 import streamlit as st
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
-db_uri = f"sqlite:///supplier-database.db"
-db = SQLDatabase.from_uri(db_uri)
-st.session_state.db = db
+@st.cache_data
+def init_database():
+    db_uri = f"sqlite:///supplier-database.db"
+    db = SQLDatabase.from_uri(db_uri)
+    return db
+
+if "db" not in st.session_state:
+    db = init_database()
+    st.session_state.db = db
+
 
 def get_schema(_):
     return db.get_table_info()
