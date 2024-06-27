@@ -223,8 +223,9 @@ with bottom():
     sb = row2.button("Clear History", use_container_width=True)
 
 if sb:
-    st.session_state.chat_history = []
-    st.session_state.chat_history.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
+    st.session_state.chat_history = [
+    AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."),
+    ]
 
 if user_query is not None and user_query.strip() != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))
