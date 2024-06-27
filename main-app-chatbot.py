@@ -223,6 +223,7 @@ with bottom():
     sb = row2.button("Clear History", use_container_width=True)
 
 if sb:
+    st.rerun()
     st.session_state.chat_history = []
     st.session_state.chat_history.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
 
