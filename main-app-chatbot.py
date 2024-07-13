@@ -281,7 +281,6 @@ for message in st.session_state.chat_display:
 
 user_query = st.chat_input("Type your Businesses Query here...", key="user_query")
 
-<<<<<<< HEAD
 with bottom():
     row2 = row.row([8, 2], vertical_align="center")
     user_query = row2.chat_input("Type a message...")
