@@ -34,8 +34,6 @@ db = SQLDatabase.from_uri(db_uri)
 data = sqlite3.connect("supplier-database.db")
 st.session_state.db = db
 
-# Main MM-AI Functions
-
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
 def get_schema(_):
@@ -281,21 +279,6 @@ for message in st.session_state.chat_display:
 
 user_query = st.chat_input("Type your Businesses Query here...", key="user_query")
 
-<<<<<<< HEAD
-with bottom():
-    row2 = row.row([8, 2], vertical_align="center")
-    user_query = row2.chat_input("Type a message...")
-    sb = row2.button("Clear History", use_container_width=True)
-
-if sb:
-    st.session_state.chat_history = [
-    AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."),
-    ]
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 9568019 (csv-feature-update)
->>>>>>> d22f8d8 (csv-feature-update)
 
 if user_query is not None and user_query.strip() != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))

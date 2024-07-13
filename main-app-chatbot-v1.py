@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage, HumanMessage, BaseMessage
+from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.utilities import SQLDatabase
@@ -16,7 +16,6 @@ import pandas as pd
 import numpy as np
 import gdown
 import zipfile
-import sqlite3
 from tqdm import tqdm
 import tempfile, os
 import streamlit as st
@@ -24,24 +23,19 @@ import streamlit as st
 st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:")
 
 @st.cache_data()
-def download_db():    
-    if not os.path.exists("supplier-database.db"):
-        gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
-download_db()
+def download_db():
+    gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
 
 db_uri = f"sqlite:///supplier-database.db"
 db = SQLDatabase.from_uri(db_uri)
-data = sqlite3.connect("supplier-database.db")
 st.session_state.db = db
-
-# Main MM-AI Functions
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
 def get_schema(_):
     return db.get_table_info()
 
-def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
+def get_sql_chain(db):
 
     with tqdm(total=4, desc="Generating the SQL Query...") as pbar:
 
@@ -62,12 +56,6 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             For example:
             Question: List the companies that provide creative or production services.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE services LIKE '%/creative%production%' OR servicetype LIKE '%production%' OR servicetype LIKE '%/creative%' AND naics LIKE '5414%' OR naics LIKE '7225%';
-
-            Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND services LIKE '%/creative%production%' OR servicetype LIKE '%production%' OR servicetype LIKE '%/creative%' AND naics LIKE '5414%' OR naics LIKE '7225%';
-
-            Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND services LIKE '%/creative%production%' OR servicetype LIKE '%production%' OR servicetype LIKE '%/creative%' AND naics LIKE '5414%' OR naics LIKE '7225%';
 
             Question: List companies providing IT services.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE UPPER(services) LIKE UPPER('%IT%') AND naics LIKE '5415%' LIMIT 10;
@@ -100,66 +88,56 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
         llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
         pbar.update(1)
         pbar.set_description("Generating and Sending the Chain...")
-        chain = (
+        return (
             RunnablePassthrough.assign(schema=get_schema)
             | prompt
             | llm
             | StrOutputParser()
         )
+    
+
+# Based on the table schema below, question, sql query, and sql response, Format the the sql response in a numbered list format with Heading for each company and attributes [Format Address City State and Zip in One Line].
+#             Do not mention the instance of SQL query or any context of it. Contextually format the opening and closing of the response to match the tone and context of the conversation.
+#             If the SQL response is empty, mention "No Matching Companies Found".   
+
+def get_response(user_query: str, db: SQLDatabase, chat_history: list):
+
+    with tqdm(total=7, desc="Generating the Response...") as pbar:
+        pbar.update(1)
+        sql_chain = get_sql_chain(db)
+        pbar.update(1)
+        template = """
+                You are a match-maker-ai at a company. You are interacting with a user who is asking for companies matching the services they are interested in from company's database.
+                Print the SQL Response as it is, without using elipses to cut short content.
+                <SCHEMA>{schema}</SCHEMA>
+
+                Conversation History: {chat_history}
+                SQL Query: <SQL>{query}</SQL>
+                User question: {question}
+                SQL Response: {response}
+                """
+        pbar.update(1)
+        prompt = ChatPromptTemplate.from_template(template)
+        pbar.update(1)
+        llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
+        pbar.update(1)
+        chain = (
+            RunnablePassthrough.assign(query=sql_chain).assign(
+            schema=lambda _: db.get_table_info(),
+            response=lambda vars: db.run(vars["query"]),
+            )
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+        pbar.update(1)
         result = chain.invoke({
             "question": user_query,
             "chat_history": chat_history,
         })
+        pbar.update(1)
+        pbar.set_description("Response Generated!")
         return result
-    
-def format_businesses_to_markdown(data):
-    if not data:
-        return "No data available."
-
-    markdown_list = []
-    count = 1
-    # Loop through each entry and format it
-    for item in eval(data):
-        print(item)
-        if len(item) == 6:  # Ensure each tuple has exactly 6 elements
-            company_name, address, city, state, zip_code, services = item
-            markdown_list.append(
-                f"""
-                {count}. **{company_name}**
-                    - ***Contact:*** dummy
-                    - ***Services Offered:*** {services}\n
-                    - ***Address:*** {address}, {city}, {state} - {zip_code}
-                """
-            )
-        else:
-            return f"Error: Item at index {count} does not contain exactly 6 elements."
-        
-        count += 1
-
-    return "\n".join(markdown_list)
-    
-def get_response(sql_query_response: str):
-    if sql_query_response:
-        try:
-            result = data.execute(sql_query_response).fetchall()
-            result = str(result).replace("\\n\\n", "")
-            result = str(result).replace("\\n", "")
-            
-            print(result)
-
-            if result:
-                df = pd.DataFrame(eval(result), columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(eval(result))+1))
-                if not len(df) == 0:
-                    return format_businesses_to_markdown(result), result, df
-                else:
-                    return "No Matching Businesses Found.", result, None
-            else:
-                return "No Matching Businesses Found."
-        except Exception as e:
-            print(e)
-            return "Error: Unable to Retrieve Businesses. Please try again later.1"
-    else:
-        return "Error: Unable to Retrieve Businesses. Please try again later."
 
 def save_uploaded_file(uploaded_file):
     try:
@@ -218,22 +196,6 @@ def get_pdf_nlp_query(pdf_file: list):
     print(result)
     return result
 
-@st.experimental_fragment()
-def download_file(csv):
-    st.download_button("Download Data to CSV File", csv, "data.csv", "csv")
-
-@st.experimental_fragment()
-def generate_mk(response):
-    st.markdown(response)
-
-@st.experimental_fragment()
-def generate_df(df):
-    st.dataframe(df, width=2000)
-
-@st.experimental_fragment()
-def generate_data(content):
-    df = pd.DataFrame(content, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(content)+1))
-    st.dataframe(df, width=2000)
 
 
 if "chat_history" not in st.session_state:
@@ -241,114 +203,68 @@ if "chat_history" not in st.session_state:
     AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."),
     ]
 
-if "chat_display" not in st.session_state:
-    st.session_state.chat_display = [
-    AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."),
-    ]
-
 load_dotenv()
 
-with st.sidebar:
-    pdf_query_v2 = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
-    on = st.toggle("Use Proprietory Databasee")
-
 st.title("Chat with Match-Maker-AI")
-
-# with bottom():
-    # row2 = row.row([16, 4], vertical_align="center")
-    # user_query = row2.chat_input("Type a message...")
-    # sb = row2.button("Clear History", use_container_width=True)
-
-# if sb:
-#     st.session_state.chat_history = []
-#     st.session_state.chat_display = []
-#     st.session_state.chat_history.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
-#     st.session_state.chat_display.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
-
-
-for message in st.session_state.chat_display:
+    
+for message in st.session_state.chat_history:
     if isinstance(message, AIMessage):
         with st.chat_message("AI"):
             with st.spinner("Generating Response..."):
-                if message.content == "Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses.":
-                    generate_mk(message.content)
-                else:
-                    mk, _, _ = get_response(message.content)
-                    generate_mk(mk)
+                st.markdown(message.content)
     elif isinstance(message, HumanMessage):
         with st.chat_message("Human"):
-            generate_mk(message.content)
+            st.markdown(message.content)
 
-user_query = st.chat_input("Type your Businesses Query here...", key="user_query")
+with st.sidebar:
+    pdf_query_v1 = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
 
-<<<<<<< HEAD
 with bottom():
     row2 = row.row([8, 2], vertical_align="center")
     user_query = row2.chat_input("Type a message...")
     sb = row2.button("Clear History", use_container_width=True)
 
 if sb:
-    st.session_state.chat_history = [
-    AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."),
-    ]
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 9568019 (csv-feature-update)
->>>>>>> d22f8d8 (csv-feature-update)
+    st.session_state.chat_history = []
+    st.session_state.chat_history.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
 
 if user_query is not None and user_query.strip() != "":
     st.session_state.chat_history.append(HumanMessage(content=user_query))
-    st.session_state.chat_display.append(HumanMessage(content=user_query))
     
     with st.chat_message("Human"):
-        generate_mk(user_query)
-
+        st.markdown(user_query)
+        
     with st.chat_message("AI"):
         with st.spinner("Retrieving Businesses..."):
-            sql_query_response = get_sql_chain(user_query, st.session_state.db, st.session_state.chat_history)
-            # print(sql_query_response)
-            response, result, df = get_response(sql_query_response)
-            st.session_state.chat_display.append(AIMessage(content=sql_query_response))
-        if df is not None:
-            st.write("Here are the Matching Businesses:")
-        generate_mk(response)
+            response = get_response(user_query, st.session_state.db, st.session_state.chat_history)
+        st.markdown(response)
         
-        if df is not None:
-            csv = df.to_csv().encode("utf-8")
-            download_file(csv)
+    st.session_state.chat_history.append(AIMessage(content=response))
 
-    st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
-
-elif pdf_query_v2 is not None:
-    st.session_state.chat_history.append(HumanMessage(content="Uploaded File **"+pdf_query_v2.name+"**. Retrieving Businesses for the RFP File Requirements."))
-    st.session_state.chat_display.append(HumanMessage(content="Uploaded File **"+pdf_query_v2.name+"**. Retrieving Businesses for the RFP File Requirements."))
+elif pdf_query_v1 is not None:
+    st.session_state.chat_history.append(HumanMessage(content="Uploaded File **"+pdf_query_v1.name+"**. Retrieving Businesses for the RFP File Requirements."))
     
     with st.chat_message("Human"):
-        generate_mk("Uploaded File **"+pdf_query_v2.name+"**. Retrieving Businesses for the RFP File Requirements.")
+        st.markdown("Uploaded File **"+pdf_query_v1.name+"**. Retrieving Businesses for the RFP File Requirements.")
         
     with st.chat_message("AI"):
             try:
                 with st.spinner("Retrieving Businesses..."):
-                    sql_query_response = get_sql_chain(get_pdf_nlp_query(pdf_query_v2), st.session_state.db, st.session_state.chat_history)
-                    response, result, df = get_response(sql_query_response)
+                    response = get_response(get_pdf_nlp_query(pdf_query_v1), st.session_state.db, st.session_state.chat_history)
             except Exception as e:
+                print(e)
                 try :
                     with st.spinner("Attempting to Retrieve Businesses..."):
-                        sql_query_response = get_sql_chain(get_pdf_nlp_query(pdf_query_v2), st.session_state.db, st.session_state.chat_history)
-                        response, result, df = get_response(sql_query_response)
+                        response = get_response(get_pdf_nlp_query(pdf_query_v1), st.session_state.db, st.session_state.chat_history)
                 except Exception as e:
                         response = "Error: Unable to Retrieve Businesses. Please try again later."
         
             if response:
-                generate_mk(response)
-                csv = df.to_csv().encode("utf-8")
-                download_file(csv)
-                st.session_state.chat_display.append(AIMessage(content=result))
+                st.markdown(response)
             else:
-                st.markdown("No Matching Businesses Found.")
+                st.markdown("No Matching Businesses Found.")    
+    st.session_state.chat_history.append(AIMessage(content=response))
 
-    st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
 
 
 
