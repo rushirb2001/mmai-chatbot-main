@@ -293,7 +293,7 @@ if user_query is not None and user_query.strip() != "":
     with st.chat_message("AI"):
         with st.spinner("Retrieving Businesses..."):
             sql_query_response = get_sql_chain(user_query, st.session_state.db, st.session_state.chat_history)
-            # print(sql_query_response)
+            print(sql_query_response)
             response, result, df = get_response(sql_query_response)
             st.session_state.chat_display.append(AIMessage(content=sql_query_response))
         if df is not None:
