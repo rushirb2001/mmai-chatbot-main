@@ -315,21 +315,27 @@ elif pdf_query_v2 is not None:
                 with st.spinner("Retrieving Businesses..."):
                     sql_query_response = get_sql_chain(get_pdf_nlp_query(pdf_query_v2), st.session_state.db, st.session_state.chat_history)
                     response, result, df = get_response(sql_query_response)
+                    if df is not None:
+                        st.write("Here are the Matching Businesses:")
+                    generate_mk(response)
+                    
+                    if df is not None:
+                        csv = df.to_csv().encode("utf-8")
+                        download_file(csv)
             except Exception as e:
                 try :
                     with st.spinner("Attempting to Retrieve Businesses..."):
                         sql_query_response = get_sql_chain(get_pdf_nlp_query(pdf_query_v2), st.session_state.db, st.session_state.chat_history)
                         response, result, df = get_response(sql_query_response)
+                        if df is not None:
+                            st.write("Here are the Matching Businesses:")
+                        generate_mk(response)
+                        
+                        if df is not None:
+                            csv = df.to_csv().encode("utf-8")
+                            download_file(csv)
                 except Exception as e:
                         response = "Error: Unable to Retrieve Businesses. Please try again later."
-        
-            if response:
-                generate_mk(response)
-                csv = df.to_csv().encode("utf-8")
-                download_file(csv)
-                st.session_state.chat_display.append(AIMessage(content=result))
-            else:
-                st.markdown("No Matching Businesses Found.")
 
     st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
 
