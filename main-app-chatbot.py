@@ -121,10 +121,13 @@ def format_businesses_to_markdown(data):
         print(item)
         if len(item) == 6:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
+            # Generate a Random 10-Digit Contact using np.random.choice
+            contact = "".join(np.random.choice(list("0123456789"), 10))
+            ##
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** dummy
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
@@ -182,7 +185,7 @@ def get_pdf_nlp_query(pdf_file: list):
     question = "From the RFP document, extract the services sought and their respective NAICS codes. Then, generate a SQL query to retrieve a list of contractors offering these services. Limit the search results to 10."
 
     template = """
-    You are an Service Identifier AI at a match-making company. You are working with a RFP pdf that a User has uploaded and you are tasked 
+    You are an Service Identifier AI at a match-making company. You are working with a RFP File Information that a User has uploaded and you are tasked 
     to contextually extract the sought services mentioned in the Request for Proposal (RFP) / Request for Information (RFI) document context provided under statement of procurement purpose.
     Following the extraction of the specified services and NAICS codes [Atmost 2 to 3 Codes] extracted from the RFP, create a Natural Language query to find companies offering these services.
 
