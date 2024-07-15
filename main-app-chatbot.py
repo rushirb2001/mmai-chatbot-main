@@ -322,6 +322,8 @@ elif pdf_query_v2 is not None:
                     if df is not None:
                         csv = df.to_csv().encode("utf-8")
                         download_file(csv)
+                    
+                    st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
             except Exception as e:
                 try :
                     with st.spinner("Attempting to Retrieve Businesses..."):
@@ -334,10 +336,10 @@ elif pdf_query_v2 is not None:
                         if df is not None:
                             csv = df.to_csv().encode("utf-8")
                             download_file(csv)
+                        st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
                 except Exception as e:
                         response = "Error: Unable to Retrieve Businesses. Please try again later."
 
-    st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
 
 
 
