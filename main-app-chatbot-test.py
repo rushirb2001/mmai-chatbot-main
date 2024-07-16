@@ -20,8 +20,19 @@ import sqlite3
 from tqdm import tqdm
 import tempfile, os
 import streamlit as st
+import folium
+from streamlit_folium import folium_static
+import math
+import os
+from sklearn.cluster import KMeans
+from random import random
+import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+from sklearn.metrics import silhouette_score
+import ast
+import itertools
 
-st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:")
+st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:", layout="wide")
 
 @st.cache_data()
 def download_db():    
@@ -216,6 +227,109 @@ def get_pdf_nlp_query(pdf_file: list):
     print(result)
     return result
 
+def haversine_distance(lat1, lon1, lat2, lon2):
+    # convert decimal degrees to radians
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    distance = 3956 * c  # radius of earth in miles
+
+    return distance
+
+def create_map():
+    # Create the map with Google Maps
+    map_obj = folium.Map(tiles=None)
+    folium.TileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 
+                     attr="google", 
+                     name="Google Maps", 
+                     overlay=True, 
+                     control=True, 
+                     subdomains=["mt0", "mt1", "mt2", "mt3"]).add_to(map_obj)
+    return map_obj
+    
+def add_markers(map_obj, locations, popup_list=None):
+    if popup_list is  None:
+        # Add markers for each location in the DataFrame
+        for lat, lon in locations:
+            folium.Marker([lat, lon]).add_to(map_obj)
+    else:
+        for i in range(len(locations)):
+            lat, lon = locations[i]
+            popup = popup_list[i]
+            folium.Marker([lat, lon], popup=popup).add_to(map_obj)
+
+    # Fit the map bounds to include all markers
+    south_west = [min(lat for lat, _ in locations) - 0.02, min(lon for _, lon in locations) - 0.02]
+    north_east = [max(lat for lat, _ in locations) + 0.02, max(lon for _, lon in locations) + 0.02]
+    map_bounds = [south_west, north_east]
+    map_obj.fit_bounds(map_bounds)
+
+    return map_obj
+
+def find_closest_and_furthest_pairs(df, distance_func):
+
+    # Create all possible pairs of points
+    pairs = list(itertools.combinations(df['lat_lng'], 2))
+
+    # Calculate distances between each pair of points
+    distances = [distance_func(p[0][0], p[0][1], p[1][0], p[1][1]) for p in pairs]
+
+    # Find closest and furthest distances
+    closest_distance = min(distances)
+    closest_pair = pairs[distances.index(closest_distance)]
+    furthest_distance = max(distances)
+    furthest_pair = pairs[distances.index(furthest_distance)]
+
+    return (closest_distance, closest_pair, furthest_distance, furthest_pair)
+
+def get_address_from_df(df, coord):
+    adress = df['address'][df['lat_lng'].apply(lambda x: x == coord)].to_string(index=False)
+    
+    return adress
+
+def calculate_center_coords(coords_list):
+    lat_mean = sum([coords[0] for coords in coords_list]) / len(coords_list)
+    lng_mean = sum([coords[1] for coords in coords_list])  / len(coords_list)
+
+    return [round(lat_mean, 6), round(lng_mean, 6)]
+
+def add_center_marker(map_obj, lat, lon, color='red', icon='star', popup=None):
+    new_marker = folium.Marker([lat, lon], icon=folium.Icon(color=color, icon=icon), popup=popup)
+    map_obj.add_child(new_marker)
+
+    return map_obj
+
+def add_lines_to_center(map_obj, locations_col, center_lat, center_lon, color='red', group_name='Lines'):
+    line_group = folium.FeatureGroup(name=group_name)
+    for lat_lng in locations_col:
+        folium.PolyLine(locations=[lat_lng, [center_lat, center_lon]], color=color).add_to(line_group)
+    map_obj.add_child(line_group)
+
+    return map_obj
+
+def cluster_latlng(coordinates_list, n_clusters):
+    # Convert the latitude and longitude coordinates to a NumPy array
+    X = np.array(coordinates_list)
+
+    # Initialize the KMeans object with the number of clusters
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+
+    # Fit the KMeans model to the data
+    kmeans.fit(X)
+
+    # Get the cluster labels for each data point
+    labels = kmeans.labels_
+
+    # Get the cluster centroids
+    centroids = kmeans.cluster_centers_
+
+    # Return the cluster labels and centroids
+    return labels, centroids
+
 @st.experimental_fragment()
 def download_file(csv):
     st.download_button("Download Data to CSV File", csv, "data.csv", "csv")
@@ -279,7 +393,7 @@ with col1:
             with st.chat_message("Human"):
                 generate_mk(message.content)
 
-    user_query = st.chat_input("Type your Businesses Query here...", key="user_query")
+    user_query = col1.chat_input("Type your Businesses Query here...", key="user_query")
 
 
     if user_query is not None and user_query.strip() != "":
