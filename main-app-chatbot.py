@@ -118,7 +118,7 @@ def format_businesses_to_markdown(data):
     count = 1
     # Loop through each entry and format it
     for item in eval(data):
-        print(item)
+        # print(item)
         if len(item) == 6:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
             # Generate a Random 10-Digit Contact using np.random.choice
@@ -146,7 +146,7 @@ def get_response(sql_query_response: str):
             result = str(result).replace("\\n\\n", "")
             result = str(result).replace("\\n", "")
             
-            print(result)
+            print(len(result))
 
             if result:
                 df = pd.DataFrame(eval(result), columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(eval(result))+1))
