@@ -32,24 +32,34 @@ from sklearn.metrics import silhouette_score
 import ast
 import itertools
 
+#-------------------------------------------------------------------------------------------------------------------------------------#
+## Streamlit Configuration and Database Download Functions
+# Set the page configuration and API keys
 st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:", layout="wide")
+LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
+# Download the database file, decorated with Streamlit's caching
 @st.cache_data()
 def download_db():    
     if not os.path.exists("supplier-database.db"):
         gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
 download_db()
 
+# Load the database and create a connection
 db_uri = f"sqlite:///supplier-database.db"
 db = SQLDatabase.from_uri(db_uri)
 data = sqlite3.connect("supplier-database.db")
 st.session_state.db = db
+#-------------------------------------------------------------------------------------------------------------------------------------#
 
-LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 
+#-------------------------------------------------------------------------------------------------------------------------------------#
+## SQL Query Generation Functions
+# Function to get the table schema
 def get_schema(_):
     return db.get_table_info()
 
+# Function to get the SQL query chain
 def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
 
     with tqdm(total=4, desc="Generating the SQL Query...") as pbar:
@@ -120,7 +130,11 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             "chat_history": chat_history,
         })
         return result
-    
+#-------------------------------------------------------------------------------------------------------------------------------------#
+
+#-------------------------------------------------------------------------------------------------------------------------------------#
+## Business Data Formatting Functions
+# Function to format the businesses into a markdown list
 def format_businesses_to_markdown(data):
     if not data:
         return "No data available."
@@ -146,7 +160,8 @@ def format_businesses_to_markdown(data):
         count += 1
 
     return "\n".join(markdown_list)
-    
+
+# Function to get the response from the SQL query
 def get_response(sql_query_response: str):
     if sql_query_response:
         try:
@@ -170,6 +185,7 @@ def get_response(sql_query_response: str):
     else:
         return "Error: Unable to Retrieve Businesses. Please try again later."
 
+# Function to save the uploaded file
 def save_uploaded_file(uploaded_file):
     try:
         temp_dir = tempfile.gettempdir()
@@ -179,10 +195,16 @@ def save_uploaded_file(uploaded_file):
         return temp_file_path
     except Exception as e:
         return None
-    
+#-------------------------------------------------------------------------------------------------------------------------------------#
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------#
+## PDF NLP Query Generation Functions
+# Function to format the documents
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
+# Function to get the PDF NLP query
 def get_pdf_nlp_query(pdf_file: list):
 
     pdf_fx = save_uploaded_file(pdf_file)
@@ -226,6 +248,7 @@ def get_pdf_nlp_query(pdf_file: list):
     result = chain.invoke(question)
     print(result)
     return result
+#-------------------------------------------------------------------------------------------------------------------------------------#
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     # convert decimal degrees to radians
