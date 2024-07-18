@@ -57,6 +57,7 @@ st.session_state.db = db
 ## SQL Query Generation Functions
 # Function to get the table schema
 def get_schema(_):
+    print(db.get_table_info())
     return db.get_table_info()
 
 # Function to get the SQL query chain
@@ -184,7 +185,11 @@ def get_response(sql_query_response: str):
             return "Error: Unable to Retrieve Businesses. Please try again later.1"
     else:
         return "Error: Unable to Retrieve Businesses. Please try again later."
+#-------------------------------------------------------------------------------------------------------------------------------------#
 
+
+#-------------------------------------------------------------------------------------------------------------------------------------#
+## PDF NLP Query Generation Functions
 # Function to save the uploaded file
 def save_uploaded_file(uploaded_file):
     try:
@@ -195,11 +200,7 @@ def save_uploaded_file(uploaded_file):
         return temp_file_path
     except Exception as e:
         return None
-#-------------------------------------------------------------------------------------------------------------------------------------#
 
-
-#-------------------------------------------------------------------------------------------------------------------------------------#
-## PDF NLP Query Generation Functions
 # Function to format the documents
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
@@ -236,7 +237,7 @@ def get_pdf_nlp_query(pdf_file: list):
     
     prompt = ChatPromptTemplate.from_template(template)
     
-    llm = ChatGroq(model="llama3-8b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
+    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
     
     # faiss_index.as_retriever() | format_docs
     chain = (
@@ -354,7 +355,9 @@ def cluster_latlng(coordinates_list, n_clusters):
     return labels, centroids
 
 @st.experimental_fragment()
-def download_file(csv):
+def download_file(df):
+    df = pd.DataFrame(df)
+    csv = df.to_csv().encode("utf-8")
     st.download_button("Download Data to CSV File", csv, "data.csv", "csv")
 
 @st.experimental_fragment()
@@ -410,8 +413,10 @@ with col1:
                     if message.content == "Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses.":
                         generate_mk(message.content)
                     else:
-                        mk, _, _ = get_response(message.content)
-                        generate_mk(mk)
+                        # mk, _, _ = get_response(message.content)
+                        mk = message.content
+                        generate_mk(mk[0])
+                        download_file(mk[1])
         elif isinstance(message, HumanMessage):
             with st.chat_message("Human"):
                 generate_mk(message.content)
@@ -431,14 +436,13 @@ with col1:
                 sql_query_response = get_sql_chain(user_query, st.session_state.db, st.session_state.chat_history)
                 # print(sql_query_response)
                 response, result, df = get_response(sql_query_response)
-                st.session_state.chat_display.append(AIMessage(content=sql_query_response))
+                st.session_state.chat_display.append(AIMessage(content=[response, df]))
             if df is not None:
                 st.write("Here are the Matching Businesses:")
             generate_mk(response)
             
             if df is not None:
-                csv = df.to_csv().encode("utf-8")
-                download_file(csv)
+                download_file(df)
 
         st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
 
