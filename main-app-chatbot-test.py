@@ -42,7 +42,10 @@ import itertools
 # Set the page configuration and API keys
 st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:", layout="wide")
 st.title("Match-Maker-AI")
+
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
 # Download the database file, decorated with Streamlit's caching
 @st.cache_data()
@@ -86,8 +89,9 @@ st.session_state.db = db
 
 #-------------------------------------------------------------------------------------------------------------------------------------#
 ## SQL Query Generation Functions
-# Function to get the table schema
 
+
+# Function to get the table schema
 def get_schema(_):
     """
     Function: Get the table schema
@@ -167,7 +171,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
         prompt = ChatPromptTemplate.from_template(template)
         pbar.update(1)
         pbar.set_description("Fetching the LLM Model...")
-        llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
+        llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
         pbar.update(1)
         pbar.set_description("Generating and Sending the Chain...")
         chain = (
@@ -208,10 +212,11 @@ def format_businesses_to_markdown(data: str):
         # print(item)
         if len(item) == 6:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
+            contact = "".join(np.random.choice(list("0123456789"), 10))
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** dummy
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]} (Dummy Contact Information)
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
@@ -235,6 +240,8 @@ def get_response(sql_query_response: str):
     Returns:
         result: SQL query result
     """
+
+    print(data.execute("SELECT company, address, city, state, zip, services FROM supplierdb WHERE UPPER(services) LIKE UPPER('%water treatment plant management%') OR UPPER(services) LIKE UPPER('%wastewater management%') OR UPPER(services) LIKE UPPER('%force main%') OR UPPER(services) LIKE UPPER('%pump station operation%') OR UPPER(services) LIKE UPPER('%maintenance services%') AND (naics LIKE '2213%' OR naics LIKE '2371%' OR naics LIKE '5629%') LIMIT 10").fetchall())
 
     if sql_query_response:
         try:
@@ -336,8 +343,8 @@ def get_pdf_nlp_query(pdf_file: list):
     
     prompt = ChatPromptTemplate.from_template(template)
     
-    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
-    # llm = ChatOpenAI(model="gpt-4o-mini", api_key=st.secrets["OPENAI_API_KEY"])
+    llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+    # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
     chain = (
         {"document": RunnablePassthrough(), "schema": get_schema, "question": RunnablePassthrough()}
@@ -354,7 +361,7 @@ def get_pdf_nlp_query(pdf_file: list):
 #     loader = PyPDFLoader(save_uploaded_file(pdf_file))
 #     pdf_f = loader.load_and_split()
 
-#     faiss_index = FAISS.from_documents(pdf_f, OpenAIEmbeddings(model="text-embedding-3-small", dimensions=1536, api_key=st.secrets["OPENAI_API_KEY"]))
+#     faiss_index = FAISS.from_documents(pdf_f, OpenAIEmbeddings(model="text-embedding-3-small", dimensions=1536, api_key=OPENAI_API_KEY))
 
 #     question = "Analyze the attached RFP document and extract the Procurement Purpose of Service/Commodity/Information or Commodity Solicitation/Work Category. Provide the list in bullet points, ensuring each point briefly describes a distinct commodity/service required by the RFP without including any descriptive or additional content."
 
@@ -380,8 +387,8 @@ def get_pdf_nlp_query(pdf_file: list):
     
 #     prompt = ChatPromptTemplate.from_template(template)
     
-#     llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
-#     # llm = ChatOpenAI(model="gpt-4o-mini", api_key=st.secrets["OPENAI_API_KEY"])
+#     llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
+#     # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
 #     # faiss_index.as_retriever() | format_docs
 #     chain = (
@@ -425,9 +432,9 @@ def get_pdf_query(pdf_file: list):
     )
     refine_prompt = PromptTemplate.from_template(refine_template)
 
-    llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
-    # llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=st.secrets["GROQ_API_KEY"])
-    # llm = ChatOpenAI(model="gpt-4o-mini", api_key=st.secrets["OPENAI_API_KEY"])
+    llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+    # llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
+    # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
     chain = load_summarize_chain(
         llm=llm,
@@ -681,7 +688,7 @@ with st.sidebar:
 
 query_global = "SELECT * from supplierdb LIMIT 2;"
 # pdf_query = st.session_state.pdf_query
-tab1, tab2 = st.tabs(["AI Chatbot", "Advanced Search"])
+tab1, tab2 = st.tabs(["Advanced AI Chatbot", "Basic Search"])
 
 with tab1:
     col1, col2 = tab1.columns([0.7, 0.3])
@@ -705,7 +712,7 @@ with tab1:
                                 if "No Matching Businesses Found." not in mk[0]:
                                     st.success("Here are the Matching Businesses:")
                                     generate_mk_ai(mk[0], len(mk[0]))
-                                    download_file(mk[1], u_key=len(mk[0])+len(st.session_state.chat_display))
+                                    download_file(mk[1], u_key=np.random.randint(1000, 9999))
                                 elif "No Matching Businesses Found." in mk[0]:
                                     st.error("No Matching Businesses Found.")
                 elif isinstance(message, HumanMessage):
@@ -732,7 +739,7 @@ with tab1:
                         if len(df) > 0:
                             st.success("Here are the Matching Businesses:")
                             generate_mk_ai(response, len(df))
-                            download_file(df, u_key = len(response)+len(st.session_state.chat_display))
+                            download_file(df, u_key=np.random.randint(1000, 9999))
                             st.session_state.chat_display.append(AIMessage(content=[response, df]))
                         else:
                             st.error("No Matching Businesses Found.")
@@ -777,7 +784,7 @@ with tab1:
                         if len(df) > 0:
                             st.success("Here are the Matching Businesses:")
                             generate_mk_ai(response, len(df))
-                            download_file(df, u_key = len(response)+len(st.session_state.chat_display))
+                            download_file(df, u_key=np.random.randint(1000, 9999))
                             st.session_state.chat_display.append(AIMessage(content=[response, df]))
                         else:
                             st.error("No Matching Businesses Found.")
@@ -827,18 +834,19 @@ with tab1:
             #     st.write(st.session_state.chat_history)
             # tb2.write(st.session_state.chat_history)
 with tab2:
-    st.write("### Advanced Search")
-    import streamlit as st
+    col1, col2 = st.columns([0.7, 0.3])
+    dt = pd.read_excel('/Users/rushirbhavsar/Downloads/2022-2017-NAICS-Code-Concordance-1.xlsx')
+    data = 0
+    if data == 0:
+        col2.write("Select from Various Search Options to Retrieve Matching Businesses.")
+    else:
+        col1.write(f"\"{data}\" Results Found.")
+    fields = col2.multiselect("Select the Fields to Search", ["company", "address", "city", "state", "zip", "services"], key="fields")
+    naics = col2.multiselect("NAICS Codes", dt, key="naics")
 
-    st.bar_chart({"data": [1, 5, 2, 6, 2, 1]})
+    print(fields, naics)
 
-    with st.expander("See explanation"):
-        st.write('''
-            The chart above shows some numbers I picked for you.
-            I rolled actual dice for these, so they're *guaranteed* to
-            be random.
-        ''')
-        st.image("https://static.streamlit.io/examples/dice.jpg")
+    
 
 
 
