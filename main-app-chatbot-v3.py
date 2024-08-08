@@ -842,8 +842,7 @@ with tab2:
     resp = 0
     text = "##### **Search Filters** "
     with col1:
-
-        col1.container(height=960, border=False)
+        dfc = col1.container(height=960, border=False)
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
@@ -897,7 +896,7 @@ with tab2:
         print(resp)
         if resp:
             df = pd.DataFrame(resp, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(resp)+1))
-            col1.dataframe(df, height=980, width=1400)
+            dfc.dataframe(df, height=960, width=1400)
             text = f"##### \"{len(resp)}\" Results Found."
             with bottom():
                 col1.info(text)
