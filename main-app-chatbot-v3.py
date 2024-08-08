@@ -843,7 +843,7 @@ with tab2:
     text = "##### **Search Filters** "
     with col1:
 
-        col1.container(height=940, border=False)
+        col1.container(height=960, border=False)
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
