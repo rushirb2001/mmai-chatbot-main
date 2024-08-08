@@ -566,7 +566,7 @@ def miles_to_meters(miles):
 def get_max_by_group(df, group_col, max_col):
     return df.groupby(group_col)[max_col].max()
 
-@st.experimental_fragment()
+@st.fragment()
 def download_file(df, u_key):
     df = pd.DataFrame(df)
     csv = df.to_csv().encode("utf-8")
@@ -579,7 +579,7 @@ def download_file(df, u_key):
 #         yield word + " "
 #         time.sleep(0.001)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_mk_ai(response, check):
     if check >= 5:
         infor = st.container(height=685)
@@ -591,16 +591,16 @@ def generate_mk_ai(response, check):
 def generate_mk(content):
     st.markdown(content)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_df(df):
     st.dataframe(df, width=2000)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_data(content):
     df = pd.DataFrame(content, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(content)+1))
     st.dataframe(df, width=2000)
 
-@st.experimental_fragment()
+@st.fragment()
 def create_map_whole(m, df):
 
     with tqdm(total=3, desc="Generating the Map...") as pbar:
