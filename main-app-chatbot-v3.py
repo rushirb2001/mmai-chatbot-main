@@ -896,10 +896,10 @@ with tab2:
         print(resp)
         if resp:
             df = pd.DataFrame(resp, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(resp)+1))
-            dfc.dataframe(df, height=960, width=1400)
+            dfc.dataframe(df, height=950, width=1400)
             text = f"##### \"{len(resp)}\" Results Found."
             with bottom():
-                col1.info(text)
+                col1.info(text, icon=":material/find_in_page:")
         else:
             col1.info("No Matching Businesses Found.")
     elif reset:
