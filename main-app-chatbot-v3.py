@@ -60,8 +60,11 @@ def download_db():
     # if not os.path.exists("supplier-database.db"):
         # gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
     """
-    if not os.path.exists("supplier_database-v3.db"):
-        gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
+    try:
+        if not os.path.exists("supplier_database-v3.db"):
+            gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
+    except Exception as e:
+        return "Error {e}: Unable to Download the Database. Please try again later."
 download_db()
 
 # Load the database and create a connection
