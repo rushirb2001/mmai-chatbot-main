@@ -60,11 +60,8 @@ def download_db():
     # if not os.path.exists("supplier-database.db"):
         # gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
     """
-    try:
-        if not os.path.exists("supplier_database-v3.db"):
-            gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
-    except Exception as e:
-        return "Error {e}: Unable to Download the Database. Please try again later."
+    if not os.path.exists("supplier_database-v3.db"):
+        gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
 download_db()
 
 # Load the database and create a connection
@@ -654,8 +651,8 @@ if "pdf_query" not in st.session_state:
 load_dotenv()
 
 with st.sidebar:
-    HORIZONTAL = "talin_labs_logo-horizontal.jpg"
-    ICON = "talin_labs_logo.jpg"
+    HORIZONTAL = "/Users/rushirbhavsar/Pictures/talin_labs_logo-horizontal.jpg"
+    ICON = "/Users/rushirbhavsar/Pictures/talin_labs_logo.jpg"
 
     st.logo(HORIZONTAL, icon_image=ICON)
     
@@ -838,42 +835,52 @@ with tab1:
             # tb2.write(st.session_state.chat_history)
 with tab2:
     col1, col2 = st.columns([0.7, 0.3])
-    dt = pd.read_excel('/Users/rushirbhavsar/Downloads/2022-2017-NAICS-Code-Concordance-1.xlsx')
+    dt = pd.read_csv('search_filter_data.csv')
 
-    # Reorder Columns
-    # dt = dt[['2017 NAICS US Code', '2017 NAICS US Title', '2012 NAICS US Code', '2012 NAICS US Title', '2012 NAICS US Title Description']]
+    # [state,city,zip,ethnicity,certifying_type,naics,data_from,Certification,Compliance,ITAR Registration,ISO Standard,CMMI,ownership]
+
     resp = 0
     text = "##### **Search Filters** "
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
             f1.info(text, icon=":material/tune:")
-            flds = st.expander("Keyword Search and Display Field Options", icon=":material/text_fields:", expanded=True)
-            with flds:
-                keyw = st.text_input("Enter Keywords or Phrases...", placeholder="Enter Keywords or Phrases...", key="user_query_basic", label_visibility="collapsed")
-                # fields = st.multiselect("Select the Fields to Search", ["company", "address", "city", "state", "zip", "services"], key="fields")
-            with st.expander("Search Ranking Filters", icon=":material/filter_list:", expanded=True):
-                c_1, c_2 = st.columns([0.5, 0.5])
-                with c_1:
-                    rev_up = st.number_input("Annual Revenue", value=0, placeholder="Min...")
-                    emp_up = st.number_input("Number of Employees", value=0, placeholder="Min...")
-                    est_up = st.number_input("Establishment Year", value=1999, placeholder="Min...")
-                with c_2:
-                    rev_down = st.number_input("Annual Revenue", value=None, placeholder="Max ($100M)...", label_visibility="hidden")
-                    emp_down = st.number_input("Employees", value=None, placeholder="Max (200)...", label_visibility="hidden")
-                    est_down = st.number_input("Established", value=None, placeholder="Max (2024)...", label_visibility="hidden")
-            with st.expander("Business Demographics", icon=":material/business:", expanded=True):
-                with st.container(height=100, border=False):
-                    naics = st.multiselect("NAICS Codes", dt, key="naics")
-            with st.expander("Geographic Information", icon=":material/globe:", expanded=True):    
-                c_one, c_two, c_three = st.columns([0.33, 0.33, 0.33])
-                city = c_one.multiselect("Select City(s)", ["New York", "New Jersey"], key="city")
-                states = c_two.multiselect("Select State(s)", ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"], key="states")
-                zipc = c_three.multiselect("Select Zip Code(s)", ["10001", "10002", "10003", "10004", "10005", "10006", "10007", "10008", "10009", "10010"], key="zipc") 
-            with st.expander("Demographics", icon=":material/demography:", expanded=True):
-                cone, ctwo = st.columns([0.5, 0.5])
-                ethnicity = cone.multiselect("Ethnicity Type(s)", ["Hispanic", "Non-Hispanic", "Black", "White", "Asian", "Native American"],)
-                ownership = ctwo.multiselect("Ownership Type(s)", ["Minority-Owned","Women-Owned","Veteran-Owned","HUBZone Certified","8(a) Certified"], key="ownership")
+            with f1.container(height=900, border=False):
+                flds = st.expander("Keyword Search", icon=":material/text_fields:", expanded=True)
+                with flds:
+                    keyw = st.text_input("Enter Keywords or Phrases...", placeholder="Enter Keywords or Phrases...", key="user_query_basic", label_visibility="collapsed")
+                    # fields = st.multiselect("Select the Fields to Search", ["company", "address", "city", "state", "zip", "services"], key="fields")
+                with st.expander("Search Ranking Filters", icon=":material/filter_list:", expanded=True):
+                    rows = st.columns([1,1,1,1])
+                    rev_up = rows[0].number_input("Annual-Revenue", value=0, placeholder="Min...")
+                    emp_up = rows[2].number_input("Employee-Count", value=0, placeholder="Min...")
+                    rev_down = rows[1].number_input("Annual Revenue", value=None, placeholder="Max ($100M)...", label_visibility="hidden")
+                    emp_down = rows[3].number_input("Employees", value=None, placeholder="Max (200)...", label_visibility="hidden")
+                    c_1, c_2 = st.columns([0.5, 0.5])
+                    with c_1:
+                        est_up = st.number_input("Establishment Year", value=1999, placeholder="Min...")
+                    with c_2:
+                        est_down = st.number_input("Established", value=None, placeholder="Max (2024)...", label_visibility="hidden")
+                with st.expander("Business Demographics", icon=":material/business:", expanded=True):
+                    with st.container(height=100, border=False):
+                        naics = st.multiselect("NAICS Codes", [str(int(code)) for code in [code for code in sorted(dt['naics'].apply(lambda x: str(int(x))[:6]).unique()) if not pd.isnull(code)]], key="naics")
+                with st.expander("Geographic Information", icon=":material/globe:", expanded=True):    
+                    c_one, c_two, c_three = st.columns([0.33, 0.33, 0.33])
+                    city = c_one.multiselect("Select City(s)", [code for code in sorted(dt['city'].unique()) if not pd.isnull(code)], key="city")
+                    states = c_two.multiselect("Select State(s)", [code for code in sorted(dt['state'].unique()) if not pd.isnull(code)], key="states")
+                    zipc = c_three.multiselect("Select Zip Code(s)", [code for code in sorted(dt['zip'].apply(lambda x: str(x)[:5]).unique()) if not pd.isnull(code)], key="zipc") 
+                with st.expander("Demographics", icon=":material/demography:", expanded=True):
+                    cone, ctwo = st.columns([0.5, 0.5])
+                    ethnicity = cone.multiselect("Ethnicity Type(s)", ['ASIAN', 'General', 'BLACK', 'NON-MINORITY', 'HISPANIC', 'NATIVE AMERICAN'], key="ethnicity")
+                    ownership = ctwo.multiselect("Ownership Type(s)", ['Minority-Owned', 'General-Ownership', 'Minority-owned', 'Women-Owned', 'Veteran-owned', 'Woman-Owned', 'Veteran-owned, Minority-owned', 'Women-owned, Minority-owned', 'Family-Owned', 'Women-owned', 'Service-Disabled-Veteran-Owned', 'Minority-owned, Woman-Owned', 'Minority-Owned, Women-Owned'], key="ownership")
+                with st.expander("Certifications and Compliance", icon=":material/verified_user:"):
+                    # ISO Standard, CMMI, ITAR Registration, Compliance
+                    one, two = st.columns([0.5, 0.5])
+                    iso = one.multiselect("ISO Standard(s)", ['ISO 9000', 'ISO 27001, ISO 9000', 'Non-ISO Standard', 'ISO 27001'], key="ISO Standard")
+                    compliance = two.multiselect("Compliance Type(s)", ['NIST 800-171 compliance', 'PIPEDA compliance', 'No Compliance Conditions', 'NIST 800-171 compliance, PIPEDA compliance'], key="Compliance")
+                    cmmi = two.multiselect("CMMI Integration(s)", ['Not-Integrated', 'Integrated'], key="CMMI")
+                    itar = one.multiselect("ITAR Registration(s)", ['Registered','Not Registered'], key="ITAR Registration")
+
             one, two = f1.columns([0.5, 0.5])
             search = one.form_submit_button("Search", use_container_width=True)      
             reset = two.form_submit_button("Reset", use_container_width=True)      
@@ -888,11 +895,18 @@ with tab2:
         if resp:
             df = pd.DataFrame(resp, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(resp)+1))
             col1.dataframe(df, height=980, width=1400)
-            text = f"##### \"{data}\" Results Found."
+            text = f"##### \"{len(resp)}\" Results Found."
+            with bottom():
+                col1.info(text)
         else:
             col1.info("No Matching Businesses Found.")
     elif reset:
         st.rerun()
+    elif search and not keyw:
+        with bottom():
+            with col1:
+                st.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
+    
     # print(fields, naics)
 
     
