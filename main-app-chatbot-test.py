@@ -651,8 +651,8 @@ if "pdf_query" not in st.session_state:
 load_dotenv()
 
 with st.sidebar:
-    HORIZONTAL = "/Users/rushirbhavsar/Pictures/talin_labs_logo-horizontal.jpg"
-    ICON = "/Users/rushirbhavsar/Pictures/talin_labs_logo.jpg"
+    HORIZONTAL = "talin_labs_logo-horizontal.jpg"
+    ICON = "talin_labs_logo.jpg"
 
     st.logo(HORIZONTAL, icon_image=ICON)
     
