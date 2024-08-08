@@ -566,7 +566,7 @@ def miles_to_meters(miles):
 def get_max_by_group(df, group_col, max_col):
     return df.groupby(group_col)[max_col].max()
 
-@st.experimental_fragment()
+@st.fragment()
 def download_file(df, u_key):
     df = pd.DataFrame(df)
     csv = df.to_csv().encode("utf-8")
@@ -579,7 +579,7 @@ def download_file(df, u_key):
 #         yield word + " "
 #         time.sleep(0.001)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_mk_ai(response, check):
     if check >= 5:
         infor = st.container(height=685)
@@ -591,16 +591,16 @@ def generate_mk_ai(response, check):
 def generate_mk(content):
     st.markdown(content)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_df(df):
     st.dataframe(df, width=2000)
 
-@st.experimental_fragment()
+@st.fragment()
 def generate_data(content):
     df = pd.DataFrame(content, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(content)+1))
     st.dataframe(df, width=2000)
 
-@st.experimental_fragment()
+@st.fragment()
 def create_map_whole(m, df):
 
     with tqdm(total=3, desc="Generating the Map...") as pbar:
@@ -841,6 +841,9 @@ with tab2:
 
     resp = 0
     text = "##### **Search Filters** "
+    with col1:
+        dfc = col1.container(height=960, border=False)
+        msc = col1.container(height=60, border=False)
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
@@ -887,26 +890,25 @@ with tab2:
             
     # Generate a SQL Query using the User Input Fields
     # print(search, fields, rev_up, rev_down, emp_up, emp_down, est_up, est_down, naics, city, states, zipc)
-    QUERY = f"SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%{search}%'))"
 
     if search and keyw:
+        QUERY = f"SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%{keyw}%'))"
         resp = data.execute(QUERY).fetchall()
-        print(resp)
         if resp:
             df = pd.DataFrame(resp, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(resp)+1))
-            col1.dataframe(df, height=980, width=1400)
-            text = f"##### \"{len(resp)}\" Results Found."
+            dfc.dataframe(df, height=950, width=1400)
+            text = f"##### \"{len(df)}\" Results Found."
             with bottom():
-                col1.info(text)
+                msc.info(text, icon=":material/find_in_page:")
         else:
-            col1.info("No Matching Businesses Found.")
+            msc.info("No Matching Businesses Found.")
     elif reset:
         st.rerun()
     elif search and not keyw:
         with bottom():
-            with col1:
-                st.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
-    
+            msc.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
+    else:
+        msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     # print(fields, naics)
 
     
