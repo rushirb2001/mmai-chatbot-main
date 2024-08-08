@@ -841,6 +841,8 @@ with tab2:
 
     resp = 0
     text = "##### **Search Filters** "
+    with col1:
+        col1.container(height=980, width=1400)
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
@@ -904,8 +906,7 @@ with tab2:
         st.rerun()
     elif search and not keyw:
         with bottom():
-            with col1:
-                st.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
+            col1.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
     
     # print(fields, naics)
 
