@@ -866,7 +866,7 @@ with tab2:
                         est_down = st.number_input("Established", value=None, placeholder="Max (2024)...", label_visibility="hidden")
                 with st.expander("Business Demographics", icon=":material/business:", expanded=True):
                     with st.container(height=100, border=False):
-                        naics = st.multiselect("NAICS Codes", [str(int(code)) for code in [code for code in sorted(dt['naics'].apply(lambda x: str(int(x))[:6]).unique()) if not pd.isnull(code)]], key="naics")
+                        naics = st.multiselect("NAICS Codes", [code for code in dt['NAICS_Description'].unique() if not pd.isnull(code)], key="naics")
                 with st.expander("Geographic Information", icon=":material/globe:", expanded=True):    
                     c_one, c_two, c_three = st.columns([0.33, 0.33, 0.33])
                     city = c_one.multiselect("Select City(s)", [code for code in sorted(dt['city'].unique()) if not pd.isnull(code)], key="city")
