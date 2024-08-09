@@ -67,6 +67,9 @@ def download_db():
     """
     if not os.path.exists("supplier_database-v3.db"):
         gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
+    # link = https://drive.google.com/file/d/18chgV_UwlWSYTEP1W579vYZWQhsBRrEI/view?usp=drive_link
+    if not os.path.exists("search_filter_data.csv"):
+        gdown.download('https://drive.google.com/uc?id=18chgV_UwlWSYTEP1W579vYZWQhsBRrEI', 'search_filter_data.csv', quiet=False)
 download_db()
 
 # Load the database and create a connection
