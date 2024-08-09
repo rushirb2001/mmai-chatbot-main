@@ -17,6 +17,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_groq import ChatGroq
 from streamlit_extras import grid, row
 from streamlit_extras.bottom_container import bottom
+from streamlit_extras.row import row
 import pandas as pd
 import numpy as np
 import gdown
@@ -40,7 +41,11 @@ import itertools
 #-------------------------------------------------------------------------------------------------------------------------------------#
 ## Streamlit Configuration and Database Download Functions
 # Set the page configuration and API keys
-st.set_page_config(page_title="Match-Maker-AI", page_icon=":speech_balloon:", layout="wide")
+st.set_page_config(
+    page_title="Match-Maker-AI", 
+    page_icon=":speech_balloon:", 
+    layout="wide"
+    )
 st.title("Match-Maker-AI")
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
@@ -140,8 +145,20 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             Question: Filter by California State.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
 
+            Question: Limit by California State.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+
             Question: Filter by California State.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+
+            Question: Limit by California State.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            
+            Question: Filter by ITAR Registered.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+
+            Question: Limit by ITAR Registered.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
 
             Question: List companies providing IT services.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10;
@@ -651,8 +668,8 @@ if "pdf_query" not in st.session_state:
 load_dotenv()
 
 with st.sidebar:
-    HORIZONTAL = "talin_labs_logo-horizontal.jpg"
-    ICON = "talin_labs_logo.jpg"
+    HORIZONTAL = "talin_labs_logo-horizontal.png"
+    ICON = "talin_labs_logo.png"
 
     st.logo(HORIZONTAL, icon_image=ICON)
     
@@ -692,10 +709,11 @@ tab1, tab2 = st.tabs(["Advanced AI Chatbot", "Basic Search"])
 
 with tab1:
     col1, col2 = tab1.columns([0.7, 0.3])
-    mapping = col2.container(height=675, border=False)
-    tabbing = col2.container(height=325, border=False)
-    tb1, tb2 = tabbing.tabs(["File Upload", "Database Selection"])
-    pdf_query = tb1.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
+    mapping = col2.container(height=615, border=False)
+    tabbing = col2.container(height=390, border=False)
+    with tabbing.expander("File Upload", expanded=True, icon=":material/file_upload:"):
+        with st.container(height=165, border=False):
+            pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
     with col1:
         upper = st.container(height=960)
 
@@ -803,7 +821,7 @@ with tab1:
         with mapping:
             t1, t2 = st.tabs(["Regions", "Business Economics"])
             with t1:
-                map_container = t1.container(height=520)
+                map_container = t1.container(height=480, border=False)
                 if full_query is not None and "*" not in full_query:
                     full_data = data.execute(full_query).fetchall()
                     if len(full_data) > 0:
@@ -813,11 +831,11 @@ with tab1:
                             create_map_whole(m, df)
                     else:
                         with map_container:
-                            folium_static(m, height=470, width=560)
-                        t1.write("#### No Matching Businesses Found.")
+                            folium_static(m, height=470, width=590)
+                        t1.error("##### No Matching Businesses Found.")
                 else:
                     with map_container:
-                        folium_static(m, height=470, width=560)
+                        folium_static(m, height=470, width=590)
                     t1.info('##### Write a Query to Find Matching Businesses.', icon=":material/find_in_page:")
             with t2:
                 st.write("### Business Economics")
@@ -825,17 +843,23 @@ with tab1:
         
         with tabbing:
             
-            
             if st.session_state.pdf_query is not None:
                 st.success("File Uploaded Successfully.")
-            on = tb2.toggle("Use Proprietory Databasee")
+            
+            with tabbing.expander("Database Selection", expanded=True, icon=":material/database:"):
+                db = st.radio("Select the Database", ["Use Proprietory Database", "Use Public Database"])
+                # if db == "Use Proprietory Database":
+                #     st.session_state.db = "supplierdb"
+                # else:
+                #     st.session_state.db = "supplierdb"
+            # on = tb2.toggle("Use Proprietory Databasee")
             # debug_container = st.container(height=350)
             # with debug_container:
             #     st.write(st.session_state.chat_history)
             # tb2.write(st.session_state.chat_history)
 with tab2:
     col1, col2 = st.columns([0.7, 0.3])
-    dt = pd.read_csv('search_filter_data.csv')
+    dt = pd.read_csv('search_filter_data.csv', low_memory=False)
 
     # [state,city,zip,ethnicity,certifying_type,naics,data_from,Certification,Compliance,ITAR Registration,ISO Standard,CMMI,ownership]
 
@@ -843,6 +867,7 @@ with tab2:
     text = "##### **Search Filters** "
     with col1:
         dfc = col1.container(height=960, border=False)
+        msc = col1.empty()
     with col2:
         f1 = st.form(key="search_form", border=False)
         with f1:
@@ -864,8 +889,8 @@ with tab2:
                     with c_2:
                         est_down = st.number_input("Established", value=None, placeholder="Max (2024)...", label_visibility="hidden")
                 with st.expander("Business Demographics", icon=":material/business:", expanded=True):
-                    with st.container(height=100, border=False):
-                        naics = st.multiselect("NAICS Codes", [str(int(code)) for code in [code for code in sorted(dt['naics'].apply(lambda x: str(int(x))[:6]).unique()) if not pd.isnull(code)]], key="naics")
+                    ncss = st.container(height=100, border=False)
+                    naics = ncss.multiselect("Select NAICS Code(s)", [code for code in dt['NAICS_Description'].unique() if not pd.isnull(code)], key="naics")
                 with st.expander("Geographic Information", icon=":material/globe:", expanded=True):    
                     c_one, c_two, c_three = st.columns([0.33, 0.33, 0.33])
                     city = c_one.multiselect("Select City(s)", [code for code in sorted(dt['city'].unique()) if not pd.isnull(code)], key="city")
@@ -889,25 +914,35 @@ with tab2:
             
     # Generate a SQL Query using the User Input Fields
     # print(search, fields, rev_up, rev_down, emp_up, emp_down, est_up, est_down, naics, city, states, zipc)
-    QUERY = f"SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%{search}%'))"
 
     if search and keyw:
+        QUERY = f"SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%{keyw}%'))"
+
         resp = data.execute(QUERY).fetchall()
-        print(resp)
         if resp:
             df = pd.DataFrame(resp, columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(resp)+1))
             dfc.dataframe(df, height=950, width=1400)
-            text = f"##### \"{len(resp)}\" Results Found."
+            text = f"##### \"{len(df)}\" Results Found."
             with bottom():
-                col1.info(text, icon=":material/find_in_page:")
+                msc.info(text, icon=":material/find_in_page:")
         else:
-            col1.info("No Matching Businesses Found.")
+            msc.error("No Matching Businesses Found.")
+            time.sleep(5)
+            msc.warning("Modify your Search Filters to find suitable Matching Businesses.", icon=":material/dashboard:")
+            time.sleep(10)
+            msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     elif reset:
         st.rerun()
     elif search and not keyw:
         with bottom():
-            col1.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
-    
+            msc.error("Please Enter a Keyword to Search.", icon=":material/error_outline:")
+            time.sleep(5)
+            msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
+    else:
+        with dfc:
+            co = st.columns([1, 1, 1])
+            co[1].image("manage_search.png", use_column_width=True, output_format="PNG")
+        msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     # print(fields, naics)
 
     
