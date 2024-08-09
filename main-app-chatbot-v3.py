@@ -22,7 +22,7 @@ import pandas as pd
 import numpy as np
 import gdown
 import zipfile, time
-import sqlite3
+import sqlite3, re
 from tqdm import tqdm
 import tempfile, os
 import streamlit as st
@@ -877,7 +877,7 @@ with tab2:
                 with flds:
                     keyw = st.text_input("Enter Keywords or Phrases...", placeholder="Enter Keywords or Phrases...", key="user_query_basic", label_visibility="collapsed")
                     # fields = st.multiselect("Select the Fields to Search", ["company", "address", "city", "state", "zip", "services"], key="fields")
-                with st.expander("Search Ranking Filters", icon=":material/filter_list:", expanded=True):
+                with st.expander("Search Ranking Filters", icon=":material/filter_list:"):
                     rows = st.columns([1,1,1,1])
                     rev_up = rows[0].number_input("Annual-Revenue", value=0, placeholder="Min...")
                     emp_up = rows[2].number_input("Employee-Count", value=0, placeholder="Min...")
@@ -900,7 +900,7 @@ with tab2:
                     cone, ctwo = st.columns([0.5, 0.5])
                     ethnicity = cone.multiselect("Ethnicity Type(s)", ['ASIAN', 'General', 'BLACK', 'NON-MINORITY', 'HISPANIC', 'NATIVE AMERICAN'], key="ethnicity")
                     ownership = ctwo.multiselect("Ownership Type(s)", ['Minority-Owned', 'General-Ownership', 'Minority-owned', 'Women-Owned', 'Veteran-owned', 'Woman-Owned', 'Veteran-owned, Minority-owned', 'Women-owned, Minority-owned', 'Family-Owned', 'Women-owned', 'Service-Disabled-Veteran-Owned', 'Minority-owned, Woman-Owned', 'Minority-Owned, Women-Owned'], key="ownership")
-                with st.expander("Certifications and Compliance", icon=":material/verified_user:"):
+                with st.expander("Certifications and Compliance", icon=":material/verified_user:", expanded=True):
                     # ISO Standard, CMMI, ITAR Registration, Compliance
                     one, two = st.columns([0.5, 0.5])
                     iso = one.multiselect("ISO Standard(s)", ['ISO 9000', 'ISO 27001, ISO 9000', 'Non-ISO Standard', 'ISO 27001'], key="ISO Standard")
@@ -916,7 +916,97 @@ with tab2:
     # print(search, fields, rev_up, rev_down, emp_up, emp_down, est_up, est_down, naics, city, states, zipc)
 
     if search and keyw:
-        QUERY = f"SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%{keyw}%'))"
+
+        words = re.split(r'[,\s\-]+', keyw.strip())
+    
+        # Generate a list of words with '%' appended at front and end
+        words = [f"%{word}%" for word in words if word]
+
+        QUERY = "SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE ("
+    
+        # Generate separate LIKE conditions for each word
+        if words:
+            conditions = " OR ".join([f"(UPPER(services) LIKE UPPER('{word}'))" for word in words])
+            QUERY += conditions
+
+        QUERY += ")"
+
+        # Additional conditions
+        conditions = []
+
+        # # Annual Revenue
+        # if rev_up:
+        #     conditions.append(f"annual_revenue >= {rev_up}")
+        # if rev_down:
+        #     conditions.append(f"annual_revenue <= {rev_down}")
+
+        # # Employee Count
+        # if emp_up:
+        #     conditions.append(f"employee_count >= {emp_up}")
+        # if emp_down:
+        #     conditions.append(f"employee_count <= {emp_down}")
+
+        # # Establishment Year
+        # if est_up:
+        #     conditions.append(f"establishment_year >= {est_up}")
+        # if est_down:
+        #     conditions.append(f"establishment_year <= {est_down}")
+
+        # NAICS Code
+        if naics:
+            naics_condition = " OR ".join([f"naics = '{code[:6]}'" for code in naics])
+            conditions.append(f"({naics_condition})")
+
+        # City
+        if city:
+            city_condition = " OR ".join([f"city = '{c}'" for c in city])
+            conditions.append(f"({city_condition})")
+
+        # State
+        if states:
+            state_condition = " OR ".join([f"state = '{s}'" for s in states])
+            conditions.append(f"({state_condition})")
+
+        # Zip Code
+        if zipc:
+            zip_condition = " OR ".join([f"zip LIKE '{z}%'" for z in zipc])
+            conditions.append(f"({zip_condition})")
+
+        # Ethnicity
+        if ethnicity:
+            ethnicity_condition = " OR ".join([f"ethnicity = '{eth}'" for eth in ethnicity])
+            conditions.append(f"({ethnicity_condition})")
+
+        # Ownership
+        if ownership:
+            ownership_condition = " OR ".join([f"ownership = '{own}'" for own in ownership])
+            conditions.append(f"({ownership_condition})")
+
+        # ISO Standards
+        if iso:
+            iso_condition = " OR ".join([f"\"ISO Standard\" LIKE '%{std}%'" for std in iso])
+            conditions.append(f"({iso_condition})")
+
+        # Compliance Types
+        if compliance:
+            compliance_condition = " OR ".join([f"\"Compliance\" LIKE '%{comp}%'" for comp in compliance])
+            conditions.append(f"({compliance_condition})")
+
+        # CMMI Integration
+        if cmmi:
+            cmmi_condition = " OR ".join([f"\"CMMI\" = '{integration}'" for integration in cmmi])
+            conditions.append(f"({cmmi_condition})")
+
+        # ITAR Registration
+        if itar:
+            itar_condition = " OR ".join([f"\"ITAR Registration\" = '{reg}'" for reg in itar])
+            conditions.append(f"({itar_condition})")
+
+        # Append all conditions
+        if conditions:
+            QUERY += " AND " + " AND ".join(conditions)
+
+        print(QUERY)
 
         resp = data.execute(QUERY).fetchall()
         if resp:
