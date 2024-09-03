@@ -236,7 +236,7 @@ def format_businesses_to_markdown(data: str):
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]} (Dummy Contact Information)
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
@@ -690,7 +690,9 @@ with st.sidebar:
                 6. Use the Regions Tab to view the Businesses on the Map.
                 7. Use the Business Economics Tab to view the Business Economics.
                 8. Use the File Upload Tab to upload a PDF RFP.""")
-
+    
+    st.button("New Session")
+    st.button("Clear Chat History")
 
 
     # pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"], key="pdf_query")
@@ -861,8 +863,6 @@ with tab1:
             #     st.write(st.session_state.chat_history)
             # tb2.write(st.session_state.chat_history)
 with tab2:
-    
-    
     col1, col2 = st.columns([0.7, 0.3])
     dt = pd.read_csv('search_filter_data.csv', low_memory=False)
 
@@ -1040,6 +1040,7 @@ with tab2:
         msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     # print(fields, naics)
 
+    
 
 
 
