@@ -1041,7 +1041,7 @@ with tab2:
         msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     # print(fields, naics)
 
-    for mnt in get_monitors(Enumerator.Cygwin):  
+    for mnt in get_monitors(Enumerator.Xinerama):  
         msc.info(str(mnt))
 
 
