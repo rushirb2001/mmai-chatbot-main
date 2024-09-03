@@ -28,7 +28,7 @@ import tempfile, os
 import streamlit as st
 import folium
 from streamlit_folium import folium_static, st_folium
-from screeninfo import get_monitors
+from screeninfo import get_monitors, Enumerator
 import math
 import os
 from sklearn.cluster import KMeans
@@ -1041,7 +1041,7 @@ with tab2:
         msc.info("Use the Search Filters to find the Matching Businesses.", icon=":material/dashboard:")
     # print(fields, naics)
 
-    for mnt in get_monitors():  
+    for mnt in get_monitors(Enumerator.Cygwin):  
         msc.info(str(mnt))
 
 
