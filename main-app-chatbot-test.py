@@ -690,7 +690,9 @@ with st.sidebar:
                 6. Use the Regions Tab to view the Businesses on the Map.
                 7. Use the Business Economics Tab to view the Business Economics.
                 8. Use the File Upload Tab to upload a PDF RFP.""")
-
+    
+    st.button("New Session")
+    st.button("Clear Chat History")
 
 
     # pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"], key="pdf_query")

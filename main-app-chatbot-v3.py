@@ -236,7 +236,7 @@ def format_businesses_to_markdown(data: str):
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]} (Dummy Contact Information)
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
