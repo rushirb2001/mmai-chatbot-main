@@ -862,8 +862,7 @@ with tab1:
             #     st.write(st.session_state.chat_history)
             # tb2.write(st.session_state.chat_history)
 with tab2:
-    for mnt in get_monitors():
-        print(str(mnt))
+    
     
     col1, col2 = st.columns([0.7, 0.3])
     dt = pd.read_csv('search_filter_data.csv', low_memory=False)
