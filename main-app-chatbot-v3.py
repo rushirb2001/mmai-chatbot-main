@@ -625,6 +625,11 @@ def create_map_whole(m, df):
 
     with tqdm(total=3, desc="Generating the Map...") as pbar:
         df['coordinates'] = df['coordinates'].apply(eval)
+
+        # Filter out any rows with coordinates beyond the limits of US states
+
+        df = df[(df['coordinates'].apply(lambda x: x[0] > 24 and x[0] < 50)) & (df['coordinates'].apply(lambda x: x[1] > -125 and x[1] < -65))]
+
         pbar.update(1)
         if len(df) < 1000:
             m = add_markers(m, df['coordinates'], popup_list=None)
