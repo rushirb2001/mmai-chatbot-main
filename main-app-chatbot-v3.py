@@ -143,43 +143,43 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             
             For example:
             Question: List the companies that provide creative or production services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: Filter by California State.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Limit by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Limit by Los Angeles City.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE city = 'Los Angeles' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY city;
             
             Question: Filter by ITAR Registered.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: Limit by ITAR Registered.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: List companies providing IT services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 ORDER BY company;
 
             Question: List the next 10 companies providing IT services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 OFFSET 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 OFFSET 10 ORDER BY company;
 
             Question: List companies with ISO certification.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE "ISO Standard" IS NOT NULL;
 
             Question: List companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10 ORDER BY state ;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10, 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10, 10 ORDER BY state;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 20, 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 20, 10 ORDER BY state;
             
             Your turn:
             
