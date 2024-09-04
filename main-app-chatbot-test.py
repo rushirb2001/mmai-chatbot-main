@@ -167,7 +167,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10;
 
             Question: List the next 10 companies providing IT services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 OFFSET 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10, 10;
 
             Question: List companies with ISO certification.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE "ISO Standard" IS NOT NULL;
@@ -176,10 +176,13 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10 OFFSET 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10, 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10 OFFSET 20;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 20, 10;
+
+            Question: Give me 10 more companies in California.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 30, 20;
             
             Your turn:
             

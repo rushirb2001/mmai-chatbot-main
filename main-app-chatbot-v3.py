@@ -176,10 +176,10 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10 OFFSET 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10, 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10 OFFSET 20;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 20, 10;
             
             Your turn:
             
@@ -236,7 +236,7 @@ def format_businesses_to_markdown(data: str):
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]} (Dummy Contact Information)
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
@@ -280,10 +280,10 @@ def get_response(sql_query_response: str):
                 else:
                     return "No Matching Businesses Found.", result, pd.DataFrame()
             else:
-                return "No Matching Businesses Found."
+                return "No Matching Businesses Found.", result, pd.DataFrame()
         except Exception as e:
             print(e)
-            return "Error: Unable to Retrieve Businesses. Please try again later.1"
+            return "Error: Unable to Retrieve Businesses. Please try again later."
     else:
         return "Error: Unable to Retrieve Businesses. Please try again later."
 #-------------------------------------------------------------------------------------------------------------------------------------#
@@ -758,15 +758,18 @@ with tab1:
                         sql_query_response = sql_query_response.replace('servicetype, services', 'services')
                         query_global = sql_query_response
                         # print(sql_query_response)
-                        response, result, df = get_response(sql_query_response)
-                        if len(df) > 0:
-                            st.success("Here are the Matching Businesses:")
-                            generate_mk_ai(response, len(df))
-                            download_file(df, u_key=np.random.randint(1000, 9999))
-                            st.session_state.chat_display.append(AIMessage(content=[response, df]))
-                        else:
-                            st.error("No Matching Businesses Found.")
-                            # st.session_state.chat_display.append(AIMessage(content="No Matching Businesses Found."))
+                        try:
+                            response, result, df = get_response(sql_query_response)
+                            if len(df) > 0:
+                                st.success("Here are the Matching Businesses:")
+                                generate_mk_ai(response, len(df))
+                                download_file(df, u_key=np.random.randint(1000, 9999))
+                                st.session_state.chat_display.append(AIMessage(content=[response, df]))
+                            else:
+                                st.error("No Matching Businesses Found.")
+                                # st.session_state.chat_display.append(AIMessage(content="No Matching Businesses Found."))
+                        except Exception as e:
+                            st.error("No Matching Businesses Found.")   
                 
                 st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
 
