@@ -146,7 +146,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
 
             Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Limit by California State.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
@@ -154,8 +154,8 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             Question: Filter by California State.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
 
-            Question: Limit by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            Question: Limit by Los Angeles City.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE city = 'Los Angeles' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY city;
             
             Question: Filter by ITAR Registered.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
