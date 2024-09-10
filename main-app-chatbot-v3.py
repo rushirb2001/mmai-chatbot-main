@@ -191,7 +191,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
         prompt = ChatPromptTemplate.from_template(template)
         pbar.update(1)
         pbar.set_description("Fetching the LLM Model...")
-        llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+        llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
         pbar.update(1)
         pbar.set_description("Generating and Sending the Chain...")
         chain = (
@@ -261,8 +261,6 @@ def get_response(sql_query_response: str):
         result: SQL query result
     """
 
-    print(data.execute("SELECT company, address, city, state, zip, services FROM supplierdb WHERE ownership = 'Women-Owned' AND (UPPER(services) LIKE UPPER('%healthcare%') OR UPPER(servicetype) LIKE UPPER('%healthcare%')) AND (naics LIKE '621%' OR naics LIKE '622%' OR naics LIKE '623%') LIMIT 10;").fetchall())
-
     if sql_query_response:
         try:
             result = data.execute(sql_query_response).fetchall()
@@ -282,7 +280,6 @@ def get_response(sql_query_response: str):
             else:
                 return "No Matching Businesses Found.", result, pd.DataFrame()
         except Exception as e:
-            print(e)
             return "Error: Unable to Retrieve Businesses. Please try again later."
     else:
         return "Error: Unable to Retrieve Businesses. Please try again later."
@@ -363,7 +360,7 @@ def get_pdf_nlp_query(pdf_file: list):
     
     prompt = ChatPromptTemplate.from_template(template)
     
-    llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
     # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
     chain = (
@@ -452,7 +449,7 @@ def get_pdf_query(pdf_file: list):
     )
     refine_prompt = PromptTemplate.from_template(refine_template)
 
-    llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+    llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
     # llm = ChatGroq(model="llama3-70b-8192", temperature=0, api_key=GROQ_API_KEY)
     # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
@@ -772,7 +769,6 @@ with tab1:
                                 st.session_state.chat_display.append(AIMessage(content=[response, df]))
                             else:
                                 st.error("No Matching Businesses Found.")
-                                # st.session_state.chat_display.append(AIMessage(content="No Matching Businesses Found."))
                         except Exception as e:
                             st.error("No Matching Businesses Found.")   
                 

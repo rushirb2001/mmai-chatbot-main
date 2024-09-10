@@ -130,8 +130,11 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
         pbar.update(1)
         pbar.set_description("Generating the Template...")
         template = """
-            You are a Procurement Match-Making Analyst at a company. You are interacting with a user who is asking for companies matching the services he is interested from company's database.
-            Based on the table schema below, write a SQL query (sqlite3) that would answer the user's question. Take the conversation history into account.
+            <SYS> 
+            You are a Master SQL Generator at a company, you are very well versed with Filtering, Ranking, Sorting and Retrieving Data from a sqlite3 Database. You are interacting with a user who is asking for companies matching the services he is interested from company's database.
+            Based on the table schema below, write a SQL query (sqlite3) that would answer the user's question in the most perfect. Take the conversation history into account.
+            The SQL Query should be formulated to match the services provided by the companies, and should also match the conditions of search.
+            </SYS>
             
             <SCHEMA>{schema}</SCHEMA>
             
@@ -139,50 +142,49 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
             
             Write only the SQL query (sqlite3) and nothing else. Do not wrap the SQL query in any other text, not even backticks. Limit the records to 10.
             Formulate the SQL query (sqlite3) to match only the first FOUR DIGITS of the NAICS code. Use OR instead of AND to match the conditions of search.
-            Use all words of the services requested, and the NAICS code to match the services provided by the companies.
+            Use all words of the services requested, and the NAICS code to match the services provided by the companies. Retrieve only the following columns: company, address, city, state, zip, servicetype.
+            Use nested SQL queries to filter the data based on the conditions of search. Use the ORDER BY clause to sort the data based on the column relevant to the search.
+            
             
             For example:
             Question: List the companies that provide creative or production services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Limit by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
             Question: Filter by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
-            Question: Limit by California State.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            Question: Limit by Los Angeles City.
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE city = 'Los Angeles' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY city;
             
             Question: Filter by ITAR Registered.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: Limit by ITAR Registered.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%';
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) AND naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
             Question: List companies providing IT services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 ORDER BY company;
 
             Question: List the next 10 companies providing IT services.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10, 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) AND naics LIKE '5415%' LIMIT 10 OFFSET 10 ORDER BY company;
 
             Question: List companies with ISO certification.
             SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE "ISO Standard" IS NOT NULL;
 
             Question: List companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 10, 10;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10, 10;
 
             Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 20, 10;
-
-            Question: Give me 10 more companies in California.
-            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' LIMIT 30, 20;
+            SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 20, 10;
             
             Your turn:
             
@@ -194,7 +196,8 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
         prompt = ChatPromptTemplate.from_template(template)
         pbar.update(1)
         pbar.set_description("Fetching the LLM Model...")
-        llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+        # llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
+        llm = ChatOpenAI(model="gpt-4-turbo", temperature=0, api_key=OPENAI_API_KEY)
         pbar.update(1)
         pbar.set_description("Generating and Sending the Chain...")
         chain = (
@@ -239,7 +242,7 @@ def format_businesses_to_markdown(data: str):
             markdown_list.append(
                 f"""
                 {count}. **{company_name}**
-                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]} (Dummy Contact Information)
+                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
                     - ***Services Offered:*** {services}\n
                     - ***Address:*** {address}, {city}, {state} - {zip_code}
                 """
@@ -279,13 +282,17 @@ def get_response(sql_query_response: str):
             if len(eval(result)) > 0 or len(result) > 0:
                 df = pd.DataFrame(eval(df_result), columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(eval(df_result))+1))
                 if not len(df) == 0:
+                    print("If FRAME 1")
                     return format_businesses_to_markdown(result), result, df
                 else:
+                    print("Else FRAME 1")
                     return "No Matching Businesses Found.", result, pd.DataFrame()
             else:
+                print("Else FRAME 2")
                 return "No Matching Businesses Found."
         except Exception as e:
             print(e)
+            print("Error: Unable to Retrieve Businesses. Please try again later.")
             return "Error: Unable to Retrieve Businesses. Please try again later.1"
     else:
         return "Error: Unable to Retrieve Businesses. Please try again later."
@@ -367,7 +374,7 @@ def get_pdf_nlp_query(pdf_file: list):
     prompt = ChatPromptTemplate.from_template(template)
     
     llm = ChatGroq(model="llama-3.1-70b-versatile", temperature=0, api_key=GROQ_API_KEY)
-    # llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
+    llm = ChatOpenAI(model="gpt-4o-mini", api_key=OPENAI_API_KEY)
     
     chain = (
         {"document": RunnablePassthrough(), "schema": get_schema, "question": RunnablePassthrough()}
@@ -823,7 +830,7 @@ with tab1:
                 st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
     with col2:
         full_query = str(query_global).replace('LIMIT 10', '')
-        full_query = full_query.replace('company, address, city, state, zip, services', 'address, coordinates')
+        full_query = full_query.replace('company, address, city, state, zip, servicetype', 'address, coordinates')
         run_sync = 0
         m = create_map()
         with mapping:

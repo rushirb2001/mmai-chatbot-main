@@ -1,0 +1,43 @@
+## Factors for consideration
+
+1. Scaling Amount
+2. File Handling
+3. Message Request Handling
+4. Website Development Budget
+
+
+## AWS Technology for consideration
+
+1. AWS S3 Bucket
+    - Structure and Unstructure Storage Solution
+    - RFPs, Conference XLSX Data Files, User Data File object
+    - Website Information Exchange Data
+    
+    - Possible Integration of AWS Athena for Ease on Data Query in S3 using SQL
+
+2. AWS DynamoDB
+    - NoSQL based Data Handling
+    - Possible Scaling for 100M+ Requests
+    - Serverless Handling => Pay-as-you-go
+    - Additional Functionalities on MetaData Storage utility
+
+3. AWS CloudWatch
+    - Website Performance
+    - Client-User Interaction Analytics
+    - Whole Kit for multiple functionalities including Canary Creation, Watch for Endpoints and APIs
+
+4. AWS ML
+    - Preconfigured Environment for ML/DL Compute
+    - Possible Option for consideration under PyTorch implemented Custom-LLM Model
+
+5. AWS API Gateway
+    - Build, Deploy and Manage System and Public API Endpoints
+
+6. AWS Detective, AWS Macie, AWS Secrets Manager
+    - Security Services across the AWS Services and SaaS Services
+
+7. AWS Bugbust 
+    - Code Development optimisation aid.
+
+8. AWS Scaling 
+    - Automatic Scaling management: on-demand.
