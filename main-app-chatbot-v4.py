@@ -86,6 +86,7 @@ def load_db():
     # db_uri = f"sqlite:///supplier-database.db"
     # data = sqlite3.connect("supplier-database.db")
     """
+
     db_uri = f"sqlite:///supplier_database-v3.db"
     database = SQLDatabase.from_uri(db_uri)
     conn = sqlite3.connect("supplier_database-v3.db", check_same_thread=False)

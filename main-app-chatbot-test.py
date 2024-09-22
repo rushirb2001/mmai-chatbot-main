@@ -74,7 +74,7 @@ download_db()
 
 # Load the database and create a connection
 @st.cache_resource()
-def load_db():
+def load_db(propdefaults=True):
     """
     Function: Load the database and create a connection
 
@@ -86,12 +86,18 @@ def load_db():
     # db_uri = f"sqlite:///supplier-database.db"
     # data = sqlite3.connect("supplier-database.db")
     """
-    db_uri = f"sqlite:///supplier_database-v3.db"
-    database = SQLDatabase.from_uri(db_uri)
-    conn = sqlite3.connect("supplier_database-v3.db", check_same_thread=False)
-    return database, conn
-db, data = load_db()
-st.session_state.db = db
+    if propdefaults:
+        db_uri = f"sqlite:///supplier_database-v3.db"
+        database = SQLDatabase.from_uri(db_uri)
+        conn = sqlite3.connect("supplier_database-v3.db", check_same_thread=False)
+        return database, conn
+    else:
+        db_uri = f"sqlite:///supplier_prop.db"
+        database = SQLDatabase.from_uri(db_uri)
+        conn = sqlite3.connect("supplier_prop.db", check_same_thread=False)
+        return database, conn
+st.session_state.db, st.session_state.data = load_db()
+db, data = st.session_state.db, st.session_state.data
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 
@@ -966,16 +972,21 @@ with st.sidebar:
 #     st.session_state.chat_display.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
 
 query_global = "SELECT * from supplierdb LIMIT 2;"
-# pdf_query = st.session_state.pdf_query
+if 'is_expanded' not in st.session_state:
+    st.session_state['is_expanded'] = True
 tab1, tab2 = st.tabs(["Advanced AI Chatbot", "Basic Search"])
 
 with tab1:
     col1, col2 = tab1.columns([0.7, 0.3])
     mapping = col2.container(height=615, border=False)
     tabbing = col2.container(height=390, border=False)
-    with tabbing.expander("File Upload", expanded=True, icon=":material/file_upload:"):
-        with st.container(height=165, border=False):
-            pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
+    file_upload = tabbing.expander("RFP File Upload", expanded=st.session_state['is_expanded'], icon=":material/file_upload:")
+    prop_upload = tabbing.expander("XLSX File Upload",expanded= True, icon=":material/file_upload:")
+
+    with file_upload:
+        flu = file_upload.container(height=165, border=False)
+        with flu:
+            pdf_query = flu.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
     with col1:
         upper = st.container(height=960)
 
@@ -1142,9 +1153,21 @@ with tab1:
             
             if st.session_state.pdf_query is not None:
                 st.success("File Uploaded Successfully.")
-            
-            with tabbing.expander("Database Selection", expanded=True, icon=":material/database:"):
-                db = st.radio("Select the Database", ["Use Proprietory Database", "Use Public Database"])
+            dbs = tabbing.expander("Database Selection", expanded=True, icon=":material/database:")
+            with dbs:
+                dbs_c1, dbs_c2 = dbs.columns([0.5, 0.5])
+                db_select = dbs_c1.radio("Select the Database", ["Use Public Database", "Use Proprietory Database"], key="db_select", label_visibility="collapsed")
+                if db_select == "Use Proprietory Database":
+                    st.session_state['is_expanded'] = False
+                    # st.rerun()
+                    with prop_upload:
+                        flq = prop_upload.container(height=125, border=False)
+                        with flq:
+                            xlsx_query = flq.file_uploader(label="Upload a XLSX to load the Proprietory Supplier List.", type=["pdf"])
+                    st.session_state.db, st.session_state.data = load_db(False)
+                else:
+                    st.session_state['is_expanded'] = True
+                    st.session_state.db, st.session_state.data = load_db(True)
                 # if db == "Use Proprietory Database":
                 #     st.session_state.db = "supplierdb"
                 # else:
