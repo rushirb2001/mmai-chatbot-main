@@ -46,7 +46,7 @@ st.set_page_config(
     page_icon=":speech_balloon:", 
     layout="wide"
     )
-st.title("Match-Maker-AI")
+st.title("Match-Maker-AI®")
 
 LANGCHAIN_API_KEY = st.secrets["LANGCHAIN_API_KEY"]
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
@@ -74,7 +74,7 @@ download_db()
 
 # Load the database and create a connection
 @st.cache_resource()
-def load_db():
+def load_db(propdefaults):
     """
     Function: Load the database and create a connection
 
@@ -86,13 +86,18 @@ def load_db():
     # db_uri = f"sqlite:///supplier-database.db"
     # data = sqlite3.connect("supplier-database.db")
     """
-
-    db_uri = f"sqlite:///supplier_database-v3.db"
-    database = SQLDatabase.from_uri(db_uri)
-    conn = sqlite3.connect("supplier_database-v3.db", check_same_thread=False)
-    return database, conn
-db, data = load_db()
-st.session_state.db = db
+    if propdefaults:
+        db_uri = f"sqlite:///supplier_database-v3.db"
+        database = SQLDatabase.from_uri(db_uri)
+        conn = sqlite3.connect("supplier_database-v3.db", check_same_thread=False)
+        return database, conn
+    else:
+        db_uri = f"sqlite:///supplier_prop.db"
+        database = SQLDatabase.from_uri(db_uri)
+        conn = sqlite3.connect("supplier_prop.db", check_same_thread=False)
+        return database, conn
+st.session_state.db, st.session_state.data = load_db(True)
+db, data = st.session_state.db, st.session_state.data
 #-------------------------------------------------------------------------------------------------------------------------------------#
 
 
@@ -114,6 +119,7 @@ def get_schema(_):
 # Function to get the SQL query chain
 
 def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
+
     """
     Function: Get the SQL query chain
 
@@ -131,71 +137,6 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
 
         pbar.update(1)
         pbar.set_description("Generating the Template...")
-        # template = """
-        #     <SYS> 
-        #     You are a Master SQL Generator at a company, you are very well versed with Filtering, Ranking, Sorting and Retrieving Data from a sqlite3 Database. You are interacting with a user who is asking for companies matching the services he is interested from company's database. Based on the table schema below and Conversation History, write a SQL query (sqlite3) that would answer the user's question in the most perfect manner possible. Retain the conversation history context to generate the SQL query. If the question is new and not in the conversation history, then generate the SQL query based on the table schema.
-        #     </SYS>
-            
-        #     <SCHEMA>{schema}</SCHEMA>
-            
-        #     <HISTORY>{chat_history}</HISTORY>
-            
-        #     <INST> 
-        #     - Write only the SQL query (sqlite3) and nothing else. 
-        #     - Do not wrap the SQL query in any other text, not even backticks. 
-        #     - Limit the records to 10.
-        #     - Formulate the SQL query (sqlite3) to match only the first FOUR DIGITS of the NAICS code. 
-        #     - DO NOT use AND operator in the SQL query.
-        #     - Use all words of the services requested, and the NAICS code to match the services provided by the companies. - Retrieve only the following columns: company, address, city, state, zip, servicetype.
-        #     - Use nested SQL queries to filter the data based on the conditions of search. 
-        #     - Use the ORDER BY clause to sort the data based on the column relevant to the search.
-        #     </INST>
-            
-        #     For example:
-        #     Question: List the companies that provide creative or production services.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
-
-        #     Question: Filter by California State.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
-
-        #     Question: Limit by California State.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
-
-        #     Question: Filter by California State.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
-
-        #     Question: Limit by Los Angeles City.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE city = 'Los Angeles' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY city;
-            
-        #     Question: Filter by ITAR Registered.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
-
-        #     Question: Limit by ITAR Registered.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
-
-        #     Question: List companies providing IT services.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) OR naics LIKE '5415%' LIMIT 10 ORDER BY company;
-
-        #     Question: List the next 10 companies providing IT services.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) OR naics LIKE '5415%' LIMIT 10 OFFSET 10 ORDER BY company;
-
-        #     Question: List companies with ISO certification.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE "ISO Standard" IS NOT NULL;
-
-        #     Question: List companies in California.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10;
-
-        #     Question: Give me 10 more companies in California.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10, 10;
-
-        #     Question: Give me 10 more companies in California.
-        #     SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 20, 10;
-            
-        #     Your turn:
-            
-        #     Question: {question}. Give me Company Names, Address [Address, City, State, Zip] and services Offered.
-        #     SQL Query:
-        #     """
         template = """
             <SYS> 
             As a Master SQL Generator at a company, you excel in Filtering, Ranking, Sorting, and Retrieving Data from a SQLite3 Database. You are currently interacting with a user who is seeking companies that offer specific services from your company's database. Given the table schema provided below and the details from your ongoing conversation with the user, craft a SQL query in SQLite3 that would accurately respond to the user's inquiry. Ensure the query is tailored to the user's specific needs based on the conversation history, or if the question is new and not previously discussed, tailor the query according to the table schema provided.
@@ -502,30 +443,31 @@ def get_response(sql_query_response: str):
     Returns:
         result: SQL query result
     """
+    print(st.session_state.db)
 
-    print(data.execute("""SELECT * 
-FROM 
-(
-    SELECT * 
-    FROM supplierdb 
-    WHERE city = 'Brooklyn' 
-    AND ownership LIKE '%Women-Owned%'
-) 
-WHERE 
-UPPER(services) LIKE UPPER('%advertising%') 
-OR UPPER(services) LIKE UPPER('%marketing%') 
-OR naics LIKE '5418%' 
-OR naics LIKE '5416%'
-ORDER BY company 
-LIMIT 10;""").fetchall())
+    print(st.session_state.data.execute("""SELECT * 
+                            FROM 
+                            (
+                                SELECT * 
+                                FROM supplierdb 
+                                WHERE city = 'Brooklyn' 
+                                AND ownership LIKE '%Women-Owned%'
+                            ) 
+                            WHERE 
+                            UPPER(services) LIKE UPPER('%advertising%') 
+                            OR UPPER(services) LIKE UPPER('%marketing%') 
+                            OR naics LIKE '5418%' 
+                            OR naics LIKE '5416%'
+                            ORDER BY company 
+                            LIMIT 10;""").fetchall())
 
     if sql_query_response:
         try:
-            result = data.execute(sql_query_response).fetchall()
+            result = st.session_state.data.execute(sql_query_response).fetchall()
             result = str(result).replace("\\n\\n", "")
             result = str(result).replace("\\n", "")
 
-            df_result = data.execute(str(sql_query_response).replace('LIMIT 10', '')).fetchall()
+            df_result = st.session_state.data.execute(str(sql_query_response).replace('LIMIT 10', '')).fetchall()
             df_result = str(df_result).replace("\\n\\n", "")
             df_result = str(df_result).replace("\\n", "")
 
@@ -749,7 +691,16 @@ def haversine_distance(lat1, lon1, lat2, lon2):
 
 def create_map():
     # Create the map with Google Maps
-    map_obj = folium.Map(tiles=None)
+    usa_center = [39.8283, -94.5795]  # Latitude and Longitude
+    initial_zoom = 3  # Zoom level suitable for viewing the entire USA
+
+    # Create the map object centered on the USA
+    map_obj = folium.Map(
+        location=usa_center,
+        zoom_start=initial_zoom,
+        tiles=None  # We'll add custom tiles next
+    )
+
     folium.TileLayer("https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 
                     attr="google", 
                     name="Google Maps", 
@@ -910,7 +861,7 @@ def create_map_whole(m, df):
                 folium.Circle(location=center, radius=radius, color='red', fill_color='red', fill_opacity=0.2).add_to(m)
 
         pbar.update(1)
-        folium_static(m, height=470, width=540)
+        folium_static(m, height=460, width=540)
         pbar.update(1)
 
 if "chat_history" not in st.session_state:
@@ -934,11 +885,15 @@ with st.sidebar:
 
     st.logo(HORIZONTAL, icon_image=ICON)
     
-    st.write("## Welcome to Match-Maker-AI")
-    st.write("### A Chatbot Assistant to Retrieve Matching Businesses.")
-    st.write(" Developed by Talin Labs.")
+    st.markdown("---")
+    st.write("# Welcome to Match-Maker-AI®")
 
-    st.subheader("Instructions")
+    st.markdown("---")
+    st.write("# A Chatbot Assistant to Retrieve Matching Businesses.")
+    st.write("© Developed by Talin Labs®.")
+
+    st.markdown("---")
+    st.header("Instructions")
     st.markdown("""
                 1. Type a Query to retrieve the matching Businesses.
                 2. Upload a PDF RFP to retrieve Businesses.
@@ -949,8 +904,16 @@ with st.sidebar:
                 7. Use the Business Economics Tab to view the Business Economics.
                 8. Use the File Upload Tab to upload a PDF RFP.""")
     
-    st.button("New Session")
-    st.button("Clear Chat History")
+    # Draw a line
+    st.markdown("---")
+
+    st.write("## Select the Database")
+    db_select = st.radio("Select the Database", ["Use Public Database", "Proprietory Database"], key="db_select", label_visibility="collapsed")
+
+    st.markdown("---")
+
+    # st.button("New Session")
+    # st.button("Clear Chat History")
 
 
     # pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"], key="pdf_query")
@@ -967,16 +930,40 @@ with st.sidebar:
 #     st.session_state.chat_display.append(AIMessage(content="Hello! I'm a Match-Making assistant. Write a Query to retrieve the matching Businesses."))
 
 query_global = "SELECT * from supplierdb LIMIT 2;"
-# pdf_query = st.session_state.pdf_query
+xlsx_query = None
+xlsx_data = None
 tab1, tab2 = st.tabs(["Advanced AI Chatbot", "Basic Search"])
+pdf_upl_prpt = True
+db_upl_prpt = True
 
 with tab1:
     col1, col2 = tab1.columns([0.7, 0.3])
     mapping = col2.container(height=615, border=False)
     tabbing = col2.container(height=390, border=False)
-    with tabbing.expander("File Upload", expanded=True, icon=":material/file_upload:"):
-        with st.container(height=165, border=False):
-            pdf_query = st.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"])
+    
+    prop_upload = tabbing.expander("Data-File Upload",expanded= True, icon=":material/file_upload:")
+    file_upload = tabbing.expander("RFP-File Upload", expanded= True, icon=":material/file_upload:")
+
+    with file_upload:
+        flu = file_upload.container(height=115, border=False)
+        with flu:
+            pdf_query = flu.file_uploader(label="Upload a RFP to Retrieve Businesses.", type=["pdf"], label_visibility="collapsed")
+    
+    if db_select == "Proprietory Database":
+        time.sleep(0.5)
+        with prop_upload:
+            flq = prop_upload.container(height=125, border=False)
+            with flq:
+                xlsx_query = flq.file_uploader(label="Upload a XLSX to load the Proprietory Supplier List.", type=["xlsx"], label_visibility="collapsed")
+        if xlsx_query is not None:
+            data_file = save_uploaded_file(xlsx_query)
+            xlsx_data = pd.read_excel(data_file)
+            conn = sqlite3.connect('supplier_prop.db')
+            xlsx_data.to_sql('supplierdb', conn, if_exists='replace', index=False)
+            st.session_state.db, st.session_state.data = load_db(False)
+    elif db_select == "Use Public Database":
+        st.session_state.db, st.session_state.data = load_db(True)
+
     with col1:
         upper = st.container(height=960)
 
@@ -987,15 +974,18 @@ with tab1:
                         with st.spinner("Generating Response..."):
                             if message.content == "Hello! I'm a Match-Making assistant. Describe your requirements to retrieve the matching Businesses.":
                                 generate_mk(message.content)
+                            elif "The Suppliers List has been Loaded Successfully." in message.content:
+                                st.success("The Suppliers List has been Loaded Successfully.")
+                                st.dataframe(xlsx_data, hide_index=True, selection_mode="single")
                             else:
                                 # mk, _, _ = get_response(message.content)
                                 mk = message.content
                                 if "No Matching Businesses Found." not in mk[0]:
-                                    st.success("Here are the Matching Businesses:")
+                                    generate_mk("Here are the Matching Businesses:")
                                     generate_mk_ai(mk[0], len(mk[0]))
                                     download_file(mk[1], u_key=np.random.randint(1000, 9999))
                                 elif "No Matching Businesses Found." in mk[0]:
-                                    st.error("No Matching Businesses Found.")
+                                    generate_mk("No Matching Businesses Found.")
                 elif isinstance(message, HumanMessage):
                     with st.chat_message("Human"):
                         generate_mk(message.content)
@@ -1076,14 +1066,45 @@ with tab1:
                         # print(nlp_1, f"\n\n Time Taken: {b-a}")
 
                 st.session_state.chat_history.append(BaseMessage(content=sql_query_response, type="AI"))
+            
+            elif xlsx_query is not None and user_query is None and pdf_query is None:
+                st.session_state.chat_history.append(HumanMessage(content="Uploaded Data-File **"+xlsx_query.name+"**. Loading Suppliers from the XLSX File."))
+                st.session_state.chat_display.append(HumanMessage(content="Uploaded Data-File **"+xlsx_query.name+"**. Loading Suppliers from the XLSX File."))
+                
+                with st.chat_message("Human"):
+                    time.sleep(0.5)
+                    generate_mk("Uploaded Data-File **"+xlsx_query.name+"**. Loading Suppliers from the XLSX File.")
+                    
+                with st.chat_message("AI"):
+                    time.sleep(0.5)
+                    with st.status("Loading Businesses...", expanded=True):
+                        st.write("Analysing the XLSX Document Structure and Data Attributes...")
+                        time.sleep(2)
+                        st.write("Extracting the Suppliers List and their attributes from the XLSX Document...")
+                        time.sleep(4)
+                        st.write("Loading the Supplier Information...")
+                        time.sleep(2)
+                        
+                    
+                    # Show a AI Message that the File has been converted and loaded. Start enterring the Query to retrieve the Businesses.
+                    st.success("The Suppliers List has been Loaded Successfully.")
+                    st.session_state.chat_display.append(AIMessage(content="The Suppliers List has been Loaded Successfully."))
+                    st.dataframe(xlsx_data, hide_index=True, selection_mode="single")
+                    
+
+
     with col2:
-        full_query = str(query_global).replace('LIMIT 10', '')
+        full_query = ''
         # repl = 'company, address, city, state, zip'
         # if 'servicetype' in full_query:
         #     repl += ', servicetype'
         # elif 'services' in full_query:
         #     repl += ', services'
-        full_query = full_query.replace('company, address, city, state, zip, servicetype', 'address, coordinates')
+        if db_select != "Proprietory Database":
+            full_query = str(query_global).replace('LIMIT 10', '')
+            full_query = full_query.replace('company, address, city, state, zip, servicetype', 'address, coordinates')
+        else:
+            full_query = query_global
         # print(full_query)
         run_sync = 0
         m = create_map()
@@ -1095,45 +1116,51 @@ with tab1:
     SELECT *"""  in full_query:
                     try:                    
                         full_data = data.execute(full_query).fetchall()
+                        print(full_query)
                     except Exception as e:
                         full_data = []
                     if len(full_data) > 0:
                         
                         t1.info(f"##### Total \"{len(full_data)}\" Matching Businesses found.", icon=":material/find_in_page:")
                         
-                        df = pd.DataFrame(eval(str(full_data)), columns=["address", "coordinates"], index=np.arange(1, len(full_data)+1))
+                        if db_select != "Proprietory Database":
+                            df = pd.DataFrame(eval(str(full_data)), columns=["address", "coordinates"], index=np.arange(1, len(full_data)+1))
 
-                        df['coordinates'] = df['coordinates'].apply(lambda x: ast.literal_eval(x))
+                            df['coordinates'] = df['coordinates'].apply(lambda x: ast.literal_eval(x))
 
-                        df['latitude'] = df['coordinates'].apply(lambda x: x[0])
-                        df['longitude'] = df['coordinates'].apply(lambda x: x[1])
+                            df['latitude'] = df['coordinates'].apply(lambda x: x[0])
+                            df['longitude'] = df['coordinates'].apply(lambda x: x[1])
 
-                        # Convert latitude and longitude to float
-                        df['latitude'] = df['latitude'].astype(float)
-                        df['longitude'] = df['longitude'].astype(float)
+                            # Convert latitude and longitude to float
+                            df['latitude'] = df['latitude'].astype(float)
+                            df['longitude'] = df['longitude'].astype(float)
 
-                        # Define the bounds for the contiguous 48 states
-                        lat_min, lat_max = 24.396308, 49.384358
-                        lon_min, lon_max = -125.0, -66.93457
+                            # Define the bounds for the contiguous 48 states
+                            lat_min, lat_max = 24.396308, 49.384358
+                            lon_min, lon_max = -125.0, -66.93457
 
-                        # Filter the DataFrame to keep only the rows within these bounds
-                        map_df = df[(df['latitude'] >= lat_min) & (df['latitude'] <= lat_max) &
-                                    (df['longitude'] >= lon_min) & (df['longitude'] <= lon_max)]
+                            # Filter the DataFrame to keep only the rows within these bounds
+                            map_df = df[(df['latitude'] >= lat_min) & (df['latitude'] <= lat_max) &
+                                        (df['longitude'] >= lon_min) & (df['longitude'] <= lon_max)]
 
-                        # Drop the 'coordinates' column if no longer needed
-                        map_df = map_df.drop(columns=['latitude', 'longitude'])
+                            # Drop the 'coordinates' column if no longer needed
+                            map_df = map_df.drop(columns=['latitude', 'longitude'])
+                        else:
+                            with map_container:
+                                folium_static(m, height=460, width=585)
 
                         
                         with map_container:
-                            create_map_whole(m, map_df)
-                        
+                            if db_select != "Proprietory Database":
+                                create_map_whole(m, map_df)
+
                     else:
                         with map_container:
-                            folium_static(m, height=470, width=590)
+                            folium_static(m, height=460, width=585)
                         t1.error("##### No Matching Businesses Found.")
                 else:
                     with map_container:
-                        folium_static(m, height=470, width=590)
+                        folium_static(m, height=460, width=585)
                     t1.info('##### Write a Query to Find Matching Businesses.', icon=":material/find_in_page:")
             with t2:
                 st.write("### Business Economics")
@@ -1143,23 +1170,13 @@ with tab1:
             
             if st.session_state.pdf_query is not None:
                 st.success("File Uploaded Successfully.")
-            
-            with tabbing.expander("Database Selection", expanded=True, icon=":material/database:"):
-                db = st.radio("Select the Database", ["Use Proprietory Database", "Use Public Database"])
-                # if db == "Use Proprietory Database":
-                #     st.session_state.db = "supplierdb"
-                # else:
-                #     st.session_state.db = "supplierdb"
-            # on = tb2.toggle("Use Proprietory Databasee")
-            # debug_container = st.container(height=350)
-            # with debug_container:
-            #     st.write(st.session_state.chat_history)
-            # tb2.write(st.session_state.chat_history)
+            # # dbs = tabbing.expander("Database Selection", expanded=True, icon=":material/database:")
+            # with dbs:
+
 with tab2:
     col1, col2 = st.columns([0.7, 0.3])
     dt = pd.read_csv('search_filter_data.csv', low_memory=False)
 
-    # [state,city,zip,ethnicity,certifying_type,naics,data_from,Certification,Compliance,ITAR Registration,ISO Standard,CMMI,ownership]
 
     resp = 0
     text = "##### **Search Filters** "
@@ -1401,6 +1418,75 @@ with tab2:
 #         db_uri = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}" 
 #         return SQLDatabase.from_uri(db_uri)
 #     ---------------------------------------------------------
+#
+#
+#
+#     # (5) : LLM Prompting and Response Generation Template
+#     ---------------------------------------------------------
+#       template = """
+        # <SYS> 
+        # You are a Master SQL Generator at a company, you are very well versed with Filtering, Ranking, Sorting and Retrieving Data from a sqlite3 Database. You are interacting with a user who is asking for companies matching the services he is interested from company's database. Based on the table schema below and Conversation History, write a SQL query (sqlite3) that would answer the user's question in the most perfect manner possible. Retain the conversation history context to generate the SQL query. If the question is new and not in the conversation history, then generate the SQL query based on the table schema.
+        # </SYS>
+        
+        # <SCHEMA>{schema}</SCHEMA>
+        
+        # <HISTORY>{chat_history}</HISTORY>
+        
+        # <INST> 
+        # - Write only the SQL query (sqlite3) and nothing else. 
+        # - Do not wrap the SQL query in any other text, not even backticks. 
+        # - Limit the records to 10.
+        # - Formulate the SQL query (sqlite3) to match only the first FOUR DIGITS of the NAICS code. 
+        # - DO NOT use AND operator in the SQL query.
+        # - Use all words of the services requested, and the NAICS code to match the services provided by the companies. - Retrieve only the following columns: company, address, city, state, zip, servicetype.
+        # - Use nested SQL queries to filter the data based on the conditions of search. 
+        # - Use the ORDER BY clause to sort the data based on the column relevant to the search.
+        # </INST>
+        
+        # For example:
+        # Question: List the companies that provide creative or production services.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
 
+        # Question: Filter by California State.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
 
+        # Question: Limit by California State.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
+
+        # Question: Filter by California State.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY state;
+
+        # Question: Limit by Los Angeles City.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE city = 'Los Angeles' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY city;
+        
+        # Question: Filter by ITAR Registered.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
+
+        # Question: Limit by ITAR Registered.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE 'ITAR Registration' = 'Registered' AND (UPPER(services) LIKE UPPER('%/creative%production%') OR UPPER(servicetype) LIKE UPPER('%production%') OR UPPER(servicetype) LIKE UPPER('%/creative%')) OR naics LIKE '5414%' OR naics LIKE '7225%' ORDER BY company;
+
+        # Question: List companies providing IT services.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) OR naics LIKE '5415%' LIMIT 10 ORDER BY company;
+
+        # Question: List the next 10 companies providing IT services.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE (UPPER(services) LIKE UPPER('%IT%')) OR naics LIKE '5415%' LIMIT 10 OFFSET 10 ORDER BY company;
+
+        # Question: List companies with ISO certification.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE "ISO Standard" IS NOT NULL;
+
+        # Question: List companies in California.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10;
+
+        # Question: Give me 10 more companies in California.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 10, 10;
+
+        # Question: Give me 10 more companies in California.
+        # SQL Query: SELECT company, address, city, state, zip, servicetype FROM supplierdb WHERE state = 'CA' ORDER BY state LIMIT 20, 10;
+        
+        # Your turn:
+        
+        # Question: {question}. Give me Company Names, Address [Address, City, State, Zip] and services Offered.
+        # SQL Query:
+        # """
+#    ---------------------------------------------------------
 # """
