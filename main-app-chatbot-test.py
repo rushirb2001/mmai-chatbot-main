@@ -44,7 +44,8 @@ import itertools
 st.set_page_config(
     page_title="Match-Maker-AI", 
     page_icon=":speech_balloon:", 
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
     )
 st.title("Match-Maker-AI®")
 
