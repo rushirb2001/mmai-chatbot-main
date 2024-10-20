@@ -1156,8 +1156,10 @@ with tab1:
 
                         
                         with map_container:
-                            if db_select != "Proprietory Database":
+                            if db_select != "Proprietory Database" and len(map_df) > 0:
                                 create_map_whole(m, map_df)
+                            else:
+                                folium_static(m, height=460, width=585)
 
                     else:
                         print("No Matching Businesses Found.")
