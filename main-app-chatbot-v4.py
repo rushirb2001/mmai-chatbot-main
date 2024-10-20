@@ -443,23 +443,23 @@ def get_response(sql_query_response: str):
     Returns:
         result: SQL query result
     """
-    print(st.session_state.db)
+    # print(st.session_state.db)
 
-    print(st.session_state.data.execute("""SELECT * 
-                            FROM 
-                            (
-                                SELECT * 
-                                FROM supplierdb 
-                                WHERE city = 'Brooklyn' 
-                                AND ownership LIKE '%Women-Owned%'
-                            ) 
-                            WHERE 
-                            UPPER(services) LIKE UPPER('%advertising%') 
-                            OR UPPER(services) LIKE UPPER('%marketing%') 
-                            OR naics LIKE '5418%' 
-                            OR naics LIKE '5416%'
-                            ORDER BY company 
-                            LIMIT 10;""").fetchall())
+    # print(st.session_state.data.execute("""SELECT * 
+    #                         FROM 
+    #                         (
+    #                             SELECT * 
+    #                             FROM supplierdb 
+    #                             WHERE city = 'Brooklyn' 
+    #                             AND ownership LIKE '%Women-Owned%'
+    #                         ) 
+    #                         WHERE 
+    #                         UPPER(services) LIKE UPPER('%advertising%') 
+    #                         OR UPPER(services) LIKE UPPER('%marketing%') 
+    #                         OR naics LIKE '5418%' 
+    #                         OR naics LIKE '5416%'
+    #                         ORDER BY company 
+    #                         LIMIT 10;""").fetchall())
 
     if sql_query_response:
         try:
@@ -1102,7 +1102,7 @@ with tab1:
         #     repl += ', services'
         if db_select != "Proprietory Database":
             full_query = str(query_global).replace('LIMIT 10', '')
-            full_query = full_query.replace('company, address, city, state, zip, servicetype', 'address, coordinates')
+            full_query = full_query.replace('company, address, city, state, zip, service_type', 'address, coordinates')
         else:
             full_query = query_global
         # print(full_query)
@@ -1114,19 +1114,24 @@ with tab1:
                 map_container = t1.container(height=480, border=False)
                 if full_query is not None and """(
     SELECT *"""  in full_query:
+                    print("Full Query: ", full_query)
                     try:                    
                         full_data = data.execute(full_query).fetchall()
-                        print(full_query)
                     except Exception as e:
                         full_data = []
+
                     if len(full_data) > 0:
                         
                         t1.info(f"##### Total \"{len(full_data)}\" Matching Businesses found.", icon=":material/find_in_page:")
-                        
                         if db_select != "Proprietory Database":
                             df = pd.DataFrame(eval(str(full_data)), columns=["address", "coordinates"], index=np.arange(1, len(full_data)+1))
+                            
+                            # Remove none values from dataframe
+                            df = df.dropna()
+                            print("Dataframe: ", df['coordinates'])
 
                             df['coordinates'] = df['coordinates'].apply(lambda x: ast.literal_eval(x))
+
 
                             df['latitude'] = df['coordinates'].apply(lambda x: x[0])
                             df['longitude'] = df['coordinates'].apply(lambda x: x[1])
@@ -1155,10 +1160,12 @@ with tab1:
                                 create_map_whole(m, map_df)
 
                     else:
+                        print("No Matching Businesses Found.")
                         with map_container:
                             folium_static(m, height=460, width=585)
                         t1.error("##### No Matching Businesses Found.")
                 else:
+                    print("No Matching Businesses Found.")
                     with map_container:
                         folium_static(m, height=460, width=585)
                     t1.info('##### Write a Query to Find Matching Businesses.', icon=":material/find_in_page:")
