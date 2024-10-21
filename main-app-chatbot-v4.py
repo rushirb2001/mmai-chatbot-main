@@ -396,6 +396,21 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                     ORDER BY company
                     LIMIT 10;
             
+            Question: Find aviation and aerospace companies.
+            SQL Query: SELECT company, address, city, state, zip, servicetype 
+                    FROM 
+
+                    (
+                    SELECT * 
+                    FROM supplierdb 
+                    WHERE UPPER(services) LIKE UPPER('%aviation%')
+                    OR UPPER(services) LIKE UPPER('%aerospace%')
+                    ) 
+
+                    WHERE naics LIKE '581%'
+                    ORDER BY company
+                    LIMIT 10;
+            
             Your turn:
             
             Question: {question}. Give me company, address, city, state, zip, servicetype.
@@ -449,7 +464,7 @@ def format_businesses_to_markdown(data: str):
         if len(item) == 6 and count <= 10:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
             contact = "".join(np.random.choice(list("0123456789"), 10))
-            if company_name is not None:
+            if company_name is not None and address != "Not Provided":
                 if "\"" in company_name:
                     company_name = company_name.replace("\"", "")
                     company_name = company_name.title()
@@ -459,14 +474,24 @@ def format_businesses_to_markdown(data: str):
                 state = state.upper() if state else None
 
                 if address is not None and city is not None and state is not None and zip_code is not None:
-                    markdown_list.append(
-                        f"""
-                        {count}. **{company_name}**
-                            - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
-                            - ***Services Offered:*** {services}\n
-                            - ***Address:*** {address}, {city}, {state} - {zip_code}
-                        """
-                    )
+                    if zip_code != "000000":
+                        markdown_list.append(
+                            f"""
+                            {count}. **{company_name}**
+                                - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                                - ***Services Offered:*** {services}\n
+                                - ***Address:*** {address}, {city}, {state} - {zip_code}
+                            """
+                        )
+                    else:
+                        markdown_list.append(
+                            f"""
+                            {count}. **{company_name}**
+                                - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                                - ***Services Offered:*** {services}\n
+                                - ***Address:*** {address}, {city}, {state}.
+                            """
+                        )
                     count += 1
                 # else:
                 #     markdown_list.append(
