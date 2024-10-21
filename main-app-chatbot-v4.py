@@ -416,7 +416,7 @@ def format_businesses_to_markdown(data: str):
     # Loop through each entry and format it
     for item in eval(data):
         # print(item)
-        if len(item) == 6:  # Ensure each tuple has exactly 6 elements
+        if len(item) == 6 and count <= 10:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
             contact = "".join(np.random.choice(list("0123456789"), 10))
             if company_name is not None:
@@ -443,6 +443,7 @@ def format_businesses_to_markdown(data: str):
                             - ***Services Offered:*** {services}
                         """
                     )
+
                 count += 1
         else:
             return f"Error: Item at index {count} does not contain exactly 6 elements."
@@ -1132,7 +1133,7 @@ with tab1:
                 map_container = t1.container(height=480, border=False)
                 if full_query is not None and """(
     SELECT *"""  in full_query:
-                    print("Full Query: ", full_query)
+                    # print("Full Query: ", full_query)
                     try:                    
                         full_data = data.execute(full_query).fetchall()
                     except Exception as e:
@@ -1146,7 +1147,7 @@ with tab1:
                             
                             # Remove none values from dataframe
                             df = df.dropna()
-                            print("Dataframe: ", df['coordinates'])
+                            # print("Dataframe: ", df['coordinates'])
 
                             df['coordinates'] = df['coordinates'].apply(lambda x: ast.literal_eval(x))
 
