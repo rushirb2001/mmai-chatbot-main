@@ -169,7 +169,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                         OR UPPER(servicetype) LIKE UPPER('%production%')
                         OR UPPER(servicetype) LIKE UPPER('%/creative%')
                         OR naics LIKE '5414%' OR naics LIKE '7225%' 
-                        ORDER BY company 
+                        ORDER BY company
                         LIMIT 10;
 
             Question: Filter by California.
@@ -293,7 +293,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                         OR UPPER(servicetype) LIKE UPPER('%/creative%'))
                         OR naics LIKE '5414%' 
                         OR naics LIKE '7225%' 
-                        ORDER BY company 
+                        ORDER BY company
                         LIMIT 10;
 
             Question: Limit by ITAR Registered.
@@ -310,7 +310,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                     OR UPPER(servicetype) LIKE UPPER('%production%') 
                     OR UPPER(servicetype) LIKE UPPER('%/creative%'))
                     OR naics LIKE '5414%' 
-                    OR naics LIKE '7225%' 
+                    OR naics LIKE '7225%'
                     ORDER BY company 
                     LIMIT 10;
 
@@ -325,7 +325,7 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                     ) 
 
                     WHERE naics LIKE '5415%'
-                    ORDER BY company 
+                    ORDER BY company
                     LIMIT 10;
 
             Question: List the next 10 companies providing IT services.
@@ -335,14 +335,14 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                     WHERE 
                     UPPER(services) LIKE UPPER('%IT%') 
                     OR naics LIKE '5415%'
-                    ORDER BY company 
+                    ORDER BY company
                     LIMIT 10, 10;
 
             Question: List companies with ISO certification.
             SQL Query: SELECT company, address, city, state, zip, servicetype   
                         FROM supplierdb 
                         WHERE "ISO Standard" IS NOT NULL
-                        ORDER BY company 
+                        ORDER BY company
                         LIMIT 10;
 
             Question: List companies in California.
@@ -365,6 +365,36 @@ def get_sql_chain(user_query: str, db: SQLDatabase, chat_history: list):
                         WHERE state = 'CA' 
                         ORDER BY state 
                         LIMIT 20, 10;
+            
+            Question: Find civil engineering companies.
+            SQL Query: SELECT company, address, city, state, zip, servicetype 
+                    FROM 
+
+                    (
+                    SELECT * 
+                    FROM supplierdb 
+                    WHERE UPPER(services) LIKE UPPER('%civil%engineering%')
+                    ) 
+
+                    WHERE naics LIKE '5413%'
+                    ORDER BY company
+                    LIMIT 10;
+            
+            Question: Find manufacturing companies.
+            SQL Query: SELECT company, address, city, state, zip, servicetype 
+                    FROM 
+
+                    (
+                    SELECT * 
+                    FROM supplierdb 
+                    WHERE UPPER(services) LIKE UPPER('%manufacturing%')
+                    ) 
+
+                    WHERE naics LIKE '31%' 
+                        OR naics LIKE '32%' 
+                        OR naics LIKE '33%'
+                    ORDER BY company
+                    LIMIT 10;
             
             Your turn:
             
@@ -420,11 +450,13 @@ def format_businesses_to_markdown(data: str):
             company_name, address, city, state, zip_code, services = item
             contact = "".join(np.random.choice(list("0123456789"), 10))
             if company_name is not None:
-                company_name = company_name.capitalize()
-                services = services.capitalize()
+                if "\"" in company_name:
+                    company_name = company_name.replace("\"", "")
+                    company_name = company_name.title()
+                services = services.title()
                 address = address.capitalize() if address else None
                 city = city.capitalize() if city else None
-                state = state.capitalize() if state else None
+                state = state.upper() if state else None
 
                 if address is not None and city is not None and state is not None and zip_code is not None:
                     markdown_list.append(
@@ -435,19 +467,20 @@ def format_businesses_to_markdown(data: str):
                             - ***Address:*** {address}, {city}, {state} - {zip_code}
                         """
                     )
-                else:
-                    markdown_list.append(
-                        f"""
-                        {count}. **{company_name}**
-                            - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
-                            - ***Services Offered:*** {services}
-                        """
-                    )
+                    count += 1
+                # else:
+                #     markdown_list.append(
+                #         f"""
+                #         {count}. **{company_name}**
+                #             - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                #             - ***Services Offered:*** {services}
+                #         """
+                #     )
 
-                count += 1
-        else:
-            return f"Error: Item at index {count} does not contain exactly 6 elements."
-
+                
+        # else:
+        #     return f"Error: Item at index {count} does not contain exactly 6 elements."
+    # print("\n".join(markdown_list))
     return "\n".join(markdown_list)
 
 # Function to get the response from the SQL query
@@ -494,7 +527,7 @@ def get_response(sql_query_response: str):
                 df = pd.DataFrame(eval(df_result), columns=["Company Name", "Address", "City", "State", "Zip", "Services Offered"], index=np.arange(1, len(eval(df_result))+1))
                 if not len(df) == 0:
                     print("If FRAME 1")
-                    return [format_businesses_to_markdown(result), result, df]
+                    return [format_businesses_to_markdown(df_result), result, df]
                 else:
                     print("Else FRAME 1")
                     return ["No Matching Businesses Found.", result, pd.DataFrame()]
