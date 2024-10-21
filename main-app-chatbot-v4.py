@@ -63,10 +63,12 @@ def download_db():
 
     Other:
     # if not os.path.exists("supplier-database.db"):
-        # gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', quiet=False)
+        # gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', 
+        # quiet=False)
+        # https://drive.google.com/file/d/1XvahREHGxTcQkq1S7ZIT5-7wqH-7I5ai/view?usp=drive_link
     """
     if not os.path.exists("supplier_database-v3.db"):
-        gdown.download('https://drive.google.com/uc?id=1IbzFyzO55siAUs6sUQ0JPJaFnsUUZhcU', 'supplier_database-v3.db', quiet=False)
+        gdown.download('https://drive.google.com/uc?id=1XvahREHGxTcQkq1S7ZIT5-7wqH-7I5ai', 'supplier_database-v3.db', quiet=False)
     # link = https://drive.google.com/file/d/18chgV_UwlWSYTEP1W579vYZWQhsBRrEI/view?usp=drive_link
     if not os.path.exists("search_filter_data.csv"):
         gdown.download('https://drive.google.com/uc?id=18chgV_UwlWSYTEP1W579vYZWQhsBRrEI', 'search_filter_data.csv', quiet=False)
