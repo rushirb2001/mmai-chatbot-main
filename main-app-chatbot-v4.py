@@ -66,6 +66,7 @@ def download_db():
         # gdown.download('https://drive.google.com/uc?id=167gji0LKnOJElgIA0flocOI8s_ZFgxGs', 'supplier-database.db', 
         # quiet=False)
         # https://drive.google.com/file/d/1XvahREHGxTcQkq1S7ZIT5-7wqH-7I5ai/view?usp=drive_link
+        https://drive.google.com/file/d/1XvahREHGxTcQkq1S7ZIT5-7wqH-7I5ai/view?usp=sharing
     """
     if not os.path.exists("supplier_database-v3.db"):
         gdown.download('https://drive.google.com/uc?id=1XvahREHGxTcQkq1S7ZIT5-7wqH-7I5ai', 'supplier_database-v3.db', quiet=False)
@@ -418,18 +419,27 @@ def format_businesses_to_markdown(data: str):
         if len(item) == 6:  # Ensure each tuple has exactly 6 elements
             company_name, address, city, state, zip_code, services = item
             contact = "".join(np.random.choice(list("0123456789"), 10))
-            markdown_list.append(
-                f"""
-                {count}. **{company_name}**
-                    - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
-                    - ***Services Offered:*** {services}\n
-                    - ***Address:*** {address}, {city}, {state} - {zip_code}
-                """
-            )
+            if company_name is not None:
+                if address is not None and city is not None and state is not None and zip_code is not None:
+                    markdown_list.append(
+                        f"""
+                        {count}. **{company_name}**
+                            - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                            - ***Services Offered:*** {services}\n
+                            - ***Address:*** {address}, {city}, {state} - {zip_code}
+                        """
+                    )
+                else:
+                    markdown_list.append(
+                        f"""
+                        {count}. **{company_name}**
+                            - ***Contact:*** +1 ({contact[:3]}) {contact[3:6]}-{contact[6:]}
+                            - ***Services Offered:*** {services}
+                        """
+                    )
+                count += 1
         else:
             return f"Error: Item at index {count} does not contain exactly 6 elements."
-        
-        count += 1
 
     return "\n".join(markdown_list)
 
