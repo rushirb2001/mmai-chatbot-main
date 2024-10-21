@@ -420,6 +420,12 @@ def format_businesses_to_markdown(data: str):
             company_name, address, city, state, zip_code, services = item
             contact = "".join(np.random.choice(list("0123456789"), 10))
             if company_name is not None:
+                company_name = company_name.capitalize()
+                services = services.capitalize()
+                address = address.capitalize() if address else None
+                city = city.capitalize() if city else None
+                state = state.capitalize() if state else None
+
                 if address is not None and city is not None and state is not None and zip_code is not None:
                     markdown_list.append(
                         f"""
